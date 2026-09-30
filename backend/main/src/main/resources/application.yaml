@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: main
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/project
+    username: postgres
+    password: 1004
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+server:
+  port: 8081
