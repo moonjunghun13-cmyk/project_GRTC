@@ -1,7 +1,10 @@
 spring:
   application:
     name: main
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
   datasource:
     url: jdbc:postgresql://localhost:5432/project
     username: postgres
@@ -16,5 +19,23 @@ spring:
       hibernate:
         format_sql: true
     show-sql: false
+
+  # 로그인 세션을 DB 에 저장 -> dashboard(관리자) 서버도 같은 세션으로 로그인 상태를 인식한다.
+  session:
+    jdbc:
+      initialize-schema: always   # SPRING_SESSION 테이블이 없으면 만든다 (이미 있으면 그대로 둠)
+
+# 우리 프로젝트 전용 설정 (spring: 아래가 아니라 최상위에 있어야 @Value("${app...}") 로 읽힌다)
+app:
+  file:
+    upload-dir: C:/mmg/uploads
+  cors:
+    allowed-origins: http://localhost:5173
+  seed:
+    enabled: true   # 관리자 계정(admin) 자동 생성. 운영 환경에서는 false
+
 server:
   port: 8081
+  servlet:
+    session:
+      timeout: 30m
