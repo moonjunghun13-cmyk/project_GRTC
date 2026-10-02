@@ -23,11 +23,11 @@ export function validateMember(form) {
 export function updateMember(id, form, photo) {
   const member = getMember(id)
   if (!member) throw new Error('회원 정보를 찾을 수 없습니다.')
-  const changes = { name:form.name.trim(), email:form.email.trim(), department:form.department, rank:form.rank, phone:form.phone.trim(), photo }
+  const changes = { name:form.name.trim(), email:form.email.trim(), department:form.department, rank:form.rank, phone:form.phone.trim(), ...(photo === undefined ? {} : {photo}) }
   const next = members.map(item => item.id === member.id ? { ...item, ...changes } : { ...item })
   // Mock records only, not credentials or authentication tokens.
   try { sessionStorage.setItem(key, JSON.stringify(next)) }
-  catch { throw new Error('미리보기 저장 공간이 부족합니다. 더 작은 프로필 이미지를 선택해 주세요.') }
+  catch { throw new Error('미리보기 저장 공간이 부족합니다. 저장 공간을 확인해 주세요.') }
   Object.assign(member, changes)
   return member
 }

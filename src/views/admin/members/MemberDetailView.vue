@@ -10,41 +10,20 @@ const member = computed(() => getMember(route.params.id))
 const form = reactive({ name:'', email:'', phone:'', department:'', rank:'' })
 const errors = ref({})
 const message = ref('')
-const photo = ref('')
-const photoError = ref('')
-const fileInput = ref(null)
-let selectionVersion = 0
+const imageFailed=ref(false)
+const memberImage=computed(()=>!imageFailed.value && (member.value?.profileImageUrl || member.value?.photo) || profileImage(member.value?.role))
 function reset() {
-  selectionVersion++
+  imageFailed.value=false
   if (member.value) for (const key of Object.keys(form)) form[key] = member.value[key] || ''
-  photo.value = member.value?.photo || ''
-  errors.value = {}; message.value = ''; photoError.value = ''
-  if (fileInput.value) fileInput.value.value = ''
+  errors.value = {}; message.value = ''
 }
 watch(() => route.params.id, reset, { immediate: true })
 function save() {
   errors.value = validateMember(form)
   message.value = ''
-  if (Object.keys(errors.value).length || photoError.value) return
-  try { updateMember(route.params.id, form, photo.value); message.value = '회원정보가 저장되었습니다.' }
+  if (Object.keys(errors.value).length) return
+  try { updateMember(route.params.id, form); message.value = '회원정보가 저장되었습니다.' }
   catch (error) { message.value = error.message }
-}
-function choosePhoto(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-  const version = ++selectionVersion
-  photoError.value = ''
-  if (!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)) { photoError.value = 'PNG, JPG, WEBP 또는 GIF 이미지를 선택해 주세요.'; return }
-  if (file.size > 2 * 1024 * 1024) { photoError.value = '2MB 이하의 이미지를 선택해 주세요.'; return }
-  const reader = new FileReader()
-  reader.onload = () => {
-    const image = new Image()
-    image.onload = () => { if (version === selectionVersion) photo.value = reader.result }
-    image.onerror = () => { if (version === selectionVersion) photoError.value = '이미지를 읽을 수 없습니다.' }
-    image.src = reader.result
-  }
-  reader.onerror = () => { if (version === selectionVersion) photoError.value = '이미지를 읽을 수 없습니다.' }
-  reader.readAsDataURL(file)
 }
 </script>
 <template>
@@ -52,9 +31,9 @@ function choosePhoto(event) {
     <header class="members-heading"><h1>회원정보</h1><p>등록된 회원 정보를 조회하고 관리할 수 있습니다.</p></header>
     <template v-if="member">
       <section class="member-summary" aria-label="저장된 회원정보">
-        <div class="member-photo-wrap"><img class="member-photo" :src="photo || profileImage(member.role)" :alt="member.name + ' 프로필'" /><button class="camera-button" type="button" aria-label="프로필 이미지 선택" @click="fileInput.click()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3Z" /><circle cx="12" cy="13" r="4" /></svg></button><input ref="fileInput" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" tabindex="-1" aria-label="프로필 이미지 파일" @change="choosePhoto" /></div>
+        <div class="member-photo-wrap"><img class="member-photo" :src="memberImage" :alt="member.name + ' 프로필'" @error="imageFailed=true" /></div>
         <dl class="member-facts"><div><dt>이름</dt><dd>{{ member.name }}</dd></div><div><dt>아이디</dt><dd>{{ member.username }}</dd></div><div><dt>소속 부서</dt><dd>{{ member.department }}</dd></div><div><dt>직급</dt><dd>{{ member.rank }}</dd></div><div><dt>이메일</dt><dd>{{ member.email }}</dd></div><div><dt>연락처</dt><dd>{{ member.phone || '-' }}</dd></div></dl>
-        <p v-if="photoError" class="member-error photo-error" role="alert">{{ photoError }}</p>
+
       </section>
       <section class="member-edit-card" aria-labelledby="personal-tab">
         <div class="member-tab-line"><h2 id="personal-tab">개인 정보</h2></div>

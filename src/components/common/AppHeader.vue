@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { auth } from '../../stores/auth'
+import { logoutCurrentUser } from '../../services/logout'
 import logo from '../../assets/logo.png'
 defineProps({ title: { type: String, default: '광주교통공사' }, admin: Boolean })
 const router = useRouter()
@@ -10,12 +10,12 @@ const logoutError = ref('')
 async function logout() {
   if (logoutBusy.value) return
   logoutBusy.value = true
-  try { await auth.logout(); await router.push('/login') }
-  catch (error) { logoutError.value = auth.errorMessage(error) }
+  try { logoutCurrentUser(); await router.replace('/') }
+  catch (error) { logoutError.value = error.message }
   finally { logoutBusy.value = false }
 }
 </script>
-<template><header class="app-header" :class="{ 'admin-header': admin }"><RouterLink to="/"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button v-if="auth.state.user" type="button" :disabled="logoutBusy" @click="logout">로그아웃</button><RouterLink v-else to="/login">로그인</RouterLink></div></header></template>
+<template><header class="app-header" :class="{ 'admin-header': admin }"><RouterLink to="/"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button type="button" :disabled="logoutBusy" @click="logout">로그아웃</button></div></header></template>
 
 <style scoped>
 .app-header.admin-header { height: 70px; min-height: 70px; flex-shrink: 0; padding: 0 28px 0 0; flex-wrap: nowrap; border-bottom: 1px solid #e9eef1; }
@@ -24,6 +24,8 @@ async function logout() {
 .admin-header > a:last-child { color: #064b76; font-weight: 700; }
 .header-session { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .header-session button, .header-session a { color: #064b76; font: inherit; font-weight: 700; }
-.header-session button { border: 0; background: none; cursor: pointer; }
+.header-session button { border: 1px solid #c7dce8; background: #f3f9fd; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: background-color 180ms ease-out; }
+.header-session button:hover {background:#e4f2fa;}
+.header-session button:focus-visible {outline:3px solid #64b3e0;outline-offset:2px;}
 .header-session [role="alert"] { color: #c52f35; font-size: 13px; }
 </style>

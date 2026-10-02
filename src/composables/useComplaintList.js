@@ -1,9 +1,9 @@
 import { computed, reactive, ref } from 'vue'
 import { mockComplaints } from '../mocks/complaints'
 export function useComplaintList() {
- const draft=reactive({keyword:'',category:'',status:''}), applied=reactive({...draft})
+ const draft=reactive({keyword:'',status:''}), applied=reactive({...draft})
  const page=ref(1), size=10, selected=ref([])
- const filtered=computed(()=>mockComplaints.filter(c=>(!applied.category||c.category===applied.category)&&(!applied.status||c.status===applied.status)&&(!applied.keyword||[c.title,c.content,c.authorName].some(v=>String(v||'').toLowerCase().includes(applied.keyword.toLowerCase())))))
+ const filtered=computed(()=>mockComplaints.filter(c=>(!applied.status||c.status===applied.status)&&(!applied.keyword||[c.title,c.content,c.authorName].some(v=>String(v||'').toLowerCase().includes(applied.keyword.toLowerCase())))))
  const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/size)))
  const rows=computed(()=>filtered.value.slice((page.value-1)*size,page.value*size))
  const pages=computed(()=>{const start=Math.floor((page.value-1)/5)*5+1;return Array.from({length:Math.min(5,totalPages.value-start+1)},(_,i)=>start+i)})

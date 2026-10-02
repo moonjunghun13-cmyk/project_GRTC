@@ -6,8 +6,6 @@
 .member-summary { position: relative; display: flex; align-items: center; gap: 48px; padding: 24px 32px; margin-bottom: 28px; }
 .member-photo-wrap { position: relative; width: 150px; flex-shrink: 0; }
 .member-photo { display: block; width: 150px; height: 150px; object-fit: contain; border-radius: 50%; background: #edf6fb; }
-.camera-button { position: absolute; right: 0; bottom: 0; width: 38px; height: 38px; display: grid; place-items: center; border: 2px solid white; border-radius: 50%; background: #064b76; color: white; cursor: pointer; }
-.camera-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .member-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); flex: 1; min-width: 0; gap: 20px 48px; margin: 0; }
 .member-facts > div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: baseline; }
 .member-facts dt { color: #7b8792; font-size: 16px; font-weight: 600; }
@@ -26,7 +24,6 @@
 .member-input-icon input { padding-left: 46px; }
 .member-error { color: #bf3139; margin: 0; font-size: 14px; line-height: 1.5; }
 .member-field [aria-invalid=true] { border-color: #bf3139; }
-.photo-error { position: absolute; left: 40px; bottom: 6px; }
 .member-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
 .member-actions button, .member-not-found a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 9px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; text-decoration: none; }
 .member-cancel { border: 1px solid #bac9d7; background: white; color: #526b80; }

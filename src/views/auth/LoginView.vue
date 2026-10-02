@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 import { errorMessage, authError } from '../../api/clients'
 import { login } from '../../api/auth'
 import { auth } from '../../stores/auth'
+import { API_INTEGRATION_ENABLED } from '../../api/clients'
+import { loginMock } from '../../mocks/profiles'
 const message = ref(auth.state.notice)
 const loginId = ref('')
 const password = ref('')
@@ -15,6 +17,11 @@ async function submit() {
   busy.value = true
   message.value = ''
   try {
+    if (!API_INTEGRATION_ENABLED) {
+      const user=loginMock(loginId.value,password.value)
+      await router.replace(user.role==='ADMIN'?'/dashboard':'/complaints')
+      return
+    }
     const { data } = await login(loginId.value, password.value)
     if (!['/dashboard', '/complaints'].includes(data?.redirectPath)) throw new Error('로그인 응답의 redirectPath를 확인해 주세요.')
     auth.clear()

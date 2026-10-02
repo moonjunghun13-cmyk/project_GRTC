@@ -34,6 +34,8 @@ router.beforeEach(async (to, from) => {
   if (!API_INTEGRATION_ENABLED) {
     setPreviewRole(to.query.previewRole)
     const user = currentUser.value
+    if (to.meta.requiresAuth && !user) return {name:'login',replace:true}
+    if (!user) return true
     const safe = route => route.matched.length && route.name !== 'forbidden' && (!route.meta.role || user.role === route.meta.role) && (!['user-complaint-detail','user-complaint-edit'].includes(route.name) || canReadComplaint(user,findComplaint(route.params.id)))
     if (from.fullPath !== to.fullPath && safe(from)) safePreviousPage.value = from.fullPath
     if (to.meta.role === 'ADMIN' && user.role !== 'ADMIN') return {name:'forbidden',query:{reason:'admin'},replace:true}

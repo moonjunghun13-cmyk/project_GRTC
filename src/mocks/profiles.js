@@ -11,10 +11,29 @@ try {
  if (['ADMIN','USER'].includes(explicit)) initial=explicit
  else if (['ADMIN','USER'].includes(stored)) initial=stored
 } catch {}
+let loggedOut=false
+try{loggedOut=localStorage.getItem('grtc.preview.loggedOut')==='true' || sessionStorage.getItem('grtc.preview.loggedOut')==='true'}catch{}
+export const mockAuthenticated=ref(!loggedOut)
 export const previewRole=ref(initial)
 export function setPreviewRole(role){
- if(!['ADMIN','USER'].includes(role)) return
+ if(!mockAuthenticated.value || !['ADMIN','USER'].includes(role)) return
  previewRole.value=role
  try{sessionStorage.setItem('grtc.preview.role',role)}catch{}
 }
-export function previewUser(){return previewRole.value==='ADMIN'?previewProfiles.admin:previewProfiles.user}
+export function previewUser(){return !mockAuthenticated.value ? null : previewRole.value==='ADMIN'?previewProfiles.admin:previewProfiles.user}
+
+export function clearMockLogin(){
+ mockAuthenticated.value=false;previewRole.value=null
+ try{sessionStorage.removeItem('grtc.preview.role');sessionStorage.setItem('grtc.preview.loggedOut','true');localStorage.setItem('grtc.preview.loggedOut','true')}catch{}
+}
+export function loginMock(loginId,password){
+ const role=loginId==='admin'&&password==='admin1234'?'ADMIN':loginId==='preview-user'&&password==='user1234'?'USER':null
+ if(!role) throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.')
+ mockAuthenticated.value=true
+ try{sessionStorage.removeItem('grtc.preview.loggedOut');localStorage.removeItem('grtc.preview.loggedOut')}catch{}
+ setPreviewRole(role)
+ return previewUser()
+}
+
+try{window.addEventListener('storage',event=>{if(event.key==='grtc.preview.loggedOut' && event.newValue==='true'){mockAuthenticated.value=false;previewRole.value=null}})}catch{}
+
