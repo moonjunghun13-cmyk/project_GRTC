@@ -1,17 +1,18 @@
 package com.grtc.dashboard.dispatch;
 
 import com.grtc.dashboard.global.common.PageResponse;
-import com.grtc.dashboard.global.common.Pages;
 import com.grtc.dashboard.global.common.SearchUtil;
 import com.grtc.dashboard.global.exception.BusinessException;
 import com.grtc.dashboard.global.exception.ErrorCode;
 import com.grtc.dashboard.vehicle.VehicleEntity;
 import com.grtc.dashboard.vehicle.VehicleRepository;
+import com.grtc.dashboard.vehicle.VehicleStatus;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 // 배차관리(조회/검색/등록/수정/취소) 비즈니스 로직
 @Slf4j
@@ -30,27 +32,33 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class DispatchService {
 
+    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 최근 배차일 먼저, 같은 날은 배차번호 순
+    public static final Sort DEFAULT_SORT = Sort.by(Sort.Order.desc("dispatchDate"), Sort.Order.asc("dispatchNo"));
+    public static final Set<String> SORTABLE = Set.of(
+            "id", "dispatchNo", "dispatchDate", "driverName", "departureTime", "arrivalTime", "status", "createdAt");
+
     private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
 
     private final DispatchRepository dispatchRepository;
     private final VehicleRepository vehicleRepository;
 
-    // 배차관리 화면: 상단 요약 카드 + 검색/필터 목록
-    //  - 요약 카드는 상태 필터를 제외한 검색 조건(검색어, 배차일자, 차량, 운전자) 기준으로 센다.
-    public DispatchDto.ListResponse list(String keyword, LocalDate date, Long vehicleId, String driver,
-                                         DispatchStatus status, int page, int size) {
-        Sort sort = Sort.by(Sort.Order.desc("dispatchDate"), Sort.Order.asc("dispatchNo"));
+    // 배차 목록: 검색어(배차번호/차량번호/운전자명) + 배차일자/차량/운전자/상태 필터 + 페이징
+    public PageResponse<DispatchDto.Response> list(String keyword, LocalDate date, Long vehicleId, String driver,
+                                                   DispatchStatus status, Pageable pageable) {
         Page<DispatchEntity> result = dispatchRepository.findAll(
-                spec(keyword, date, vehicleId, driver, status), Pages.of(page, size, sort));
+                spec(keyword, date, vehicleId, driver, status), pageable);
+        return PageResponse.from(result, DispatchDto.Response::from);
+    }
 
-        DispatchDto.Summary summary = new DispatchDto.Summary(
+    // 상단 요약 카드: 상태 필터를 제외한 검색 조건(검색어, 배차일자, 차량, 운전자) 기준으로 센다.
+    public DispatchDto.Summary summary(String keyword, LocalDate date, Long vehicleId, String driver) {
+        return new DispatchDto.Summary(
                 dispatchRepository.count(spec(keyword, date, vehicleId, driver, null)),
                 dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.COMPLETED)),
                 dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.WAITING)),
                 dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CHANGED)),
                 dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CANCELLED))
         );
-        return new DispatchDto.ListResponse(summary, PageResponse.of(result, DispatchDto.Response::from));
     }
 
     // 배차 상세보기
@@ -58,11 +66,12 @@ public class DispatchService {
         return DispatchDto.Response.from(find(id));
     }
 
-    // 배차 등록: 시간 순서/차량 시간 겹침을 검사하고, 배차번호를 만들어 '배차 대기'로 저장
+    // 배차 등록: 시간 순서/차량 상태/차량 시간 겹침을 검사하고, 배차번호를 만들어 '배차 대기'로 저장
     @Transactional
     public DispatchDto.Response create(DispatchDto.Request request) {
         validateTime(request.departureTime(), request.arrivalTime());
         VehicleEntity vehicle = findVehicle(request.vehicleId());
+        checkAvailable(vehicle);
         checkOverlap(vehicle.getId(), request.dispatchDate(),
                 request.departureTime(), request.arrivalTime(), -1L);
 
@@ -84,29 +93,43 @@ public class DispatchService {
         return DispatchDto.Response.from(saved);
     }
 
-    // 배차 수정: 취소된 배차는 수정 불가. 상태를 직접 주지 않았는데 내용이 바뀌면 '배차 변경'으로 처리
+    // 배차 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
+    //  - 취소된 배차는 수정 불가
+    //  - 상태를 직접 주지 않았는데 차량/날짜/시간이 바뀌면 '배차 변경'으로 처리
     @Transactional
-    public DispatchDto.Response update(Long id, DispatchDto.Request request) {
+    public DispatchDto.Response update(Long id, DispatchDto.UpdateRequest request) {
         DispatchEntity dispatch = find(id);
         if (dispatch.getStatus() == DispatchStatus.CANCELLED) {
             throw new BusinessException(ErrorCode.DISPATCH_CANCELLED);
         }
-        validateTime(request.departureTime(), request.arrivalTime());
-        VehicleEntity vehicle = findVehicle(request.vehicleId());
-        checkOverlap(vehicle.getId(), request.dispatchDate(),
-                request.departureTime(), request.arrivalTime(), id);
 
-        boolean changed = !dispatch.getVehicle().getId().equals(vehicle.getId())
-                || !dispatch.getDispatchDate().equals(request.dispatchDate())
-                || !dispatch.getDepartureTime().equals(request.departureTime())
-                || !dispatch.getArrivalTime().equals(request.arrivalTime());
+        // 보내지 않은 항목은 기존 값을 그대로 쓴다.
+        LocalDate dispatchDate = request.dispatchDate() != null ? request.dispatchDate() : dispatch.getDispatchDate();
+        LocalTime departureTime = request.departureTime() != null ? request.departureTime() : dispatch.getDepartureTime();
+        LocalTime arrivalTime = request.arrivalTime() != null ? request.arrivalTime() : dispatch.getArrivalTime();
+        String driverName = request.driverName() != null ? request.driverName().trim() : dispatch.getDriverName();
+        String remark = request.remark() != null ? blankToNull(request.remark()) : dispatch.getRemark();
+
+        boolean vehicleChanged = request.vehicleId() != null
+                && !request.vehicleId().equals(dispatch.getVehicle().getId());
+        VehicleEntity vehicle = vehicleChanged ? findVehicle(request.vehicleId()) : dispatch.getVehicle();
+
+        validateTime(departureTime, arrivalTime);
+        if (vehicleChanged) {
+            checkAvailable(vehicle);
+        }
+        checkOverlap(vehicle.getId(), dispatchDate, departureTime, arrivalTime, id);
+
+        boolean changed = vehicleChanged
+                || !dispatch.getDispatchDate().equals(dispatchDate)
+                || !dispatch.getDepartureTime().equals(departureTime)
+                || !dispatch.getArrivalTime().equals(arrivalTime);
 
         DispatchStatus status = request.status() != null
                 ? request.status()
                 : (changed ? DispatchStatus.CHANGED : dispatch.getStatus());
 
-        dispatch.update(vehicle, request.dispatchDate(), request.driverName().trim(),
-                request.departureTime(), request.arrivalTime(), blankToNull(request.remark()), status);
+        dispatch.update(vehicle, dispatchDate, driverName, departureTime, arrivalTime, remark, status);
         log.info("[dispatch] 수정 id={} status={}", id, status);
         return DispatchDto.Response.from(dispatch);
     }
@@ -168,7 +191,14 @@ public class DispatchService {
         }
     }
 
-    // 같은 차량이 같은 날 겹치는 시간에 두 번 배차되지 않도록 검사
+    // 정비 중이거나 운행정지된 차량은 배차할 수 없다 (명세서 3-2 TRAINSET_NOT_AVAILABLE)
+    private void checkAvailable(VehicleEntity vehicle) {
+        if (vehicle.getStatus() == VehicleStatus.MAINTENANCE || vehicle.getStatus() == VehicleStatus.STOPPED) {
+            throw new BusinessException(ErrorCode.VEHICLE_NOT_AVAILABLE);
+        }
+    }
+
+    // 같은 차량이 같은 날 겹치는 시간에 두 번 배차되지 않도록 검사 (명세서 3-2 SCHEDULE_CONFLICT)
     private void checkOverlap(Long vehicleId, LocalDate date, LocalTime departure, LocalTime arrival,
                               Long excludeId) {
         long overlaps = dispatchRepository.countOverlap(

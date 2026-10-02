@@ -41,6 +41,12 @@ public class MemberEntity {
     @Column(name = "job_position", length = 50)
     private String position; // 직급(관리자 계정용, 선택)
 
+    @Column(name = "profile_image", length = 100)
+    private String profileImage; // 프로필 이미지 저장 파일명(선택, 변경은 main 서버에서 한다)
+
+    @Column(name = "profile_thumbnail", length = 100)
+    private String profileThumbnail; // 프로필 썸네일 저장 파일명(선택)
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

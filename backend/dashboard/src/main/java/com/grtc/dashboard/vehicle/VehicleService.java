@@ -2,7 +2,6 @@ package com.grtc.dashboard.vehicle;
 
 import com.grtc.dashboard.dispatch.DispatchRepository;
 import com.grtc.dashboard.global.common.PageResponse;
-import com.grtc.dashboard.global.common.Pages;
 import com.grtc.dashboard.global.common.SearchUtil;
 import com.grtc.dashboard.global.exception.BusinessException;
 import com.grtc.dashboard.global.exception.ErrorCode;
@@ -11,13 +10,16 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 // 차량관리(조회/검색/등록/수정/삭제) 비즈니스 로직
 @Slf4j
@@ -26,12 +28,16 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class VehicleService {
 
+    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 차량번호 순
+    public static final Sort DEFAULT_SORT = Sort.by("vehicleNo");
+    public static final Set<String> SORTABLE = Set.of("id", "vehicleNo", "status", "lastInspectionDate");
+
     private final VehicleRepository vehicleRepository;
     private final DispatchRepository dispatchRepository;
     private final OperationRepository operationRepository;
 
-    // 차량관리 화면: 상단 요약 카드 + 차량번호 검색/상태 필터 목록
-    public VehicleDto.ListResponse list(String keyword, VehicleStatus status, int page, int size) {
+    // 차량 목록: 차량번호 검색 + 상태 필터 + 페이징
+    public PageResponse<VehicleDto.Response> list(String keyword, VehicleStatus status, Pageable pageable) {
         Specification<VehicleEntity> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (SearchUtil.hasText(keyword)) {
@@ -44,8 +50,8 @@ public class VehicleService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<VehicleEntity> result = vehicleRepository.findAll(spec, Pages.of(page, size, Sort.by("vehicleNo")));
-        return new VehicleDto.ListResponse(summary(), PageResponse.of(result, VehicleDto.Response::from));
+        Page<VehicleEntity> result = vehicleRepository.findAll(spec, pageable);
+        return PageResponse.from(result, VehicleDto.Response::from);
     }
 
     // 상태별 차량 수 (차량관리 요약 카드, 대시보드 차량운행현황/가동률에서 같이 사용)
@@ -80,15 +86,21 @@ public class VehicleService {
         return VehicleDto.Response.from(saved);
     }
 
-    // 차량 수정
+    // 차량 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
     @Transactional
-    public VehicleDto.Response update(Long id, VehicleDto.Request request) {
+    public VehicleDto.Response update(Long id, VehicleDto.UpdateRequest request) {
         VehicleEntity vehicle = find(id);
-        String vehicleNo = request.vehicleNo().trim();
+
+        String vehicleNo = request.vehicleNo() != null ? request.vehicleNo().trim() : vehicle.getVehicleNo();
         if (vehicleRepository.existsByVehicleNoAndIdNot(vehicleNo, id)) {
             throw new BusinessException(ErrorCode.DUPLICATE_VEHICLE_NO);
         }
-        vehicle.update(vehicleNo, request.status(), request.lastInspectionDate());
+        VehicleStatus status = request.status() != null ? request.status() : vehicle.getStatus();
+        LocalDate lastInspectionDate = request.lastInspectionDate() != null
+                ? request.lastInspectionDate()
+                : vehicle.getLastInspectionDate();
+
+        vehicle.update(vehicleNo, status, lastInspectionDate);
         log.info("[vehicle] 수정 id={}", id);
         return VehicleDto.Response.from(vehicle);
     }

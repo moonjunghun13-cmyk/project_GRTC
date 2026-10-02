@@ -1,7 +1,6 @@
 package com.grtc.dashboard.member;
 
 import com.grtc.dashboard.global.common.PageResponse;
-import com.grtc.dashboard.global.common.Pages;
 import com.grtc.dashboard.global.common.SearchUtil;
 import com.grtc.dashboard.global.exception.BusinessException;
 import com.grtc.dashboard.global.exception.ErrorCode;
@@ -13,6 +12,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 // 회원관리(조회/검색/수정/상태·권한 변경) 비즈니스 로직
 @Slf4j
@@ -33,11 +34,15 @@ public class MemberService {
     public static final List<String> DEPARTMENTS = List.of("운영팀", "차량팀", "시설팀", "안전관리팀", "고객지원팀");
     public static final List<String> POSITIONS = List.of("시스템 관리자", "팀장", "대리", "사원");
 
+    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 가입 순서대로
+    public static final Sort DEFAULT_SORT = Sort.by("id");
+    public static final Set<String> SORTABLE =
+            Set.of("id", "name", "loginId", "email", "role", "status", "createdAt");
+
     private final MemberRepository memberRepository;
 
-    // 회원관리 목록: 이름/아이디/이메일 검색 + 권한/상태 필터 + 페이징 (화면과 같이 가입 순서대로)
-    public PageResponse<MemberDto.ListItem> list(String keyword, Role role, MemberStatus status,
-                                                 int page, int size) {
+    // 회원관리 목록: 이름/아이디/이메일 검색 + 권한/상태 필터 + 페이징
+    public PageResponse<MemberDto.ListItem> list(String keyword, Role role, MemberStatus status, Pageable pageable) {
         Specification<MemberEntity> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (SearchUtil.hasText(keyword)) {
@@ -57,7 +62,7 @@ public class MemberService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<MemberEntity> result = memberRepository.findAll(spec, Pages.of(page, size, Sort.by("id")));
+        Page<MemberEntity> result = memberRepository.findAll(spec, pageable);
 
         // 번호는 검색 결과 기준 순번 (페이지가 넘어가도 이어서 증가)
         int base = result.getNumber() * result.getSize();
@@ -66,7 +71,7 @@ public class MemberService {
         for (int i = 0; i < rows.size(); i++) {
             items.add(MemberDto.ListItem.of(base + i + 1, rows.get(i)));
         }
-        return PageResponse.of(result, items);
+        return PageResponse.from(result, items);
     }
 
     // 회원 상세 조회
@@ -74,22 +79,27 @@ public class MemberService {
         return MemberDto.Detail.from(find(id));
     }
 
-    // 회원정보 수정
+    // 회원정보 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
     @Transactional
     public MemberDto.Detail update(Long id, MemberDto.UpdateRequest request) {
         MemberEntity member = find(id);
 
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        if (memberRepository.existsByEmailAndIdNot(email, id)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        String name = request.name() != null ? request.name().trim() : member.getName();
+
+        String email = member.getEmail();
+        if (request.email() != null) {
+            email = request.email().trim().toLowerCase(Locale.ROOT);
+            if (memberRepository.existsByEmailAndIdNot(email, id)) {
+                throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            }
         }
 
         member.updateProfile(
-                request.name().trim(),
+                name,
                 email,
-                blankToNull(request.phone()),
-                blankToNull(request.department()),
-                blankToNull(request.position())
+                request.phone() != null ? blankToNull(request.phone()) : member.getPhone(),
+                request.department() != null ? blankToNull(request.department()) : member.getDepartment(),
+                request.position() != null ? blankToNull(request.position()) : member.getPosition()
         );
         log.info("[member] 회원정보 수정 id={}", id);
         return MemberDto.Detail.from(member);

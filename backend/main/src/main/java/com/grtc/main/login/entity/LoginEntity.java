@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 // member 테이블과 매핑되는 회원 엔티티
 // ※ 예전 login 테이블(nickname/email 기반)과 컬럼 구조가 달라서 새 테이블(member)을 사용한다.
 //    (ddl-auto: update 는 기존 테이블의 NOT NULL 컬럼을 지우지 못해 insert 가 실패하기 때문)
+// ※ dashboard 서버의 MemberEntity 와 "같은 테이블"을 함께 쓴다. 컬럼을 바꿀 때는 두 클래스를 같이 바꿔야 한다.
 @Entity
 @Table(name = "member")
 @Getter
@@ -41,6 +42,12 @@ public class LoginEntity {
     @Column(name = "job_position", length = 50)
     private String position; // 직급(관리자 계정용, 선택)
 
+    @Column(name = "profile_image", length = 100)
+    private String profileImage; // 프로필 이미지 저장 파일명(선택)
+
+    @Column(name = "profile_thumbnail", length = 100)
+    private String profileThumbnail; // 프로필 썸네일 저장 파일명(선택)
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -69,6 +76,17 @@ public class LoginEntity {
         this.phone = phone;
         this.department = department;
         this.position = position;
+    }
+
+    // 비밀번호 변경 (암호화된 값을 넘겨야 한다)
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    // 프로필 이미지 변경 (원본 / 썸네일 저장 파일명)
+    public void changeProfileImage(String profileImage, String profileThumbnail) {
+        this.profileImage = profileImage;
+        this.profileThumbnail = profileThumbnail;
     }
 
     public void changeRole(Role role) {

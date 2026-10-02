@@ -1,6 +1,6 @@
-package com.grtc.dashboard.global.security;
+package com.grtc.main.global.security;
 
-import com.grtc.dashboard.global.exception.ErrorCode;
+import com.grtc.main.global.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;

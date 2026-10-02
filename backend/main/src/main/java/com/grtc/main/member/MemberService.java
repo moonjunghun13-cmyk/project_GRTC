@@ -5,10 +5,13 @@ import com.grtc.main.global.exception.ErrorCode;
 import com.grtc.main.login.entity.LoginEntity;
 import com.grtc.main.login.repository.LoginRepository;
 import com.grtc.main.login.service.LoginService;
+import com.grtc.main.login.service.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Locale;
@@ -26,31 +29,74 @@ public class MemberService {
 
     private final LoginRepository loginRepository;
     private final LoginService loginService;
+    private final TokenService tokenService;
+    private final ProfileImageService profileImageService;
+    private final PasswordEncoder passwordEncoder;
 
     // 내 정보 조회 (정지/탈퇴 회원은 막는다)
     public MemberDto.Detail get(Long id) {
         return MemberDto.Detail.from(loginService.getActiveMember(id));
     }
 
-    // 내 정보 수정
+    // 내 정보 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
     @Transactional
     public MemberDto.Detail update(Long id, MemberDto.UpdateRequest request) {
         LoginEntity member = loginService.getActiveMember(id);
 
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        if (loginRepository.existsByEmailAndIdNot(email, id)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        String name = request.name() != null ? request.name().trim() : member.getName();
+
+        String email = member.getEmail();
+        if (request.email() != null) {
+            email = request.email().trim().toLowerCase(Locale.ROOT);
+            if (loginRepository.existsByEmailAndIdNot(email, id)) {
+                throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            }
         }
 
         member.updateProfile(
-                request.name().trim(),
+                name,
                 email,
-                blankToNull(request.phone()),
-                blankToNull(request.department()),
-                blankToNull(request.position())
+                request.phone() != null ? blankToNull(request.phone()) : member.getPhone(),
+                request.department() != null ? blankToNull(request.department()) : member.getDepartment(),
+                request.position() != null ? blankToNull(request.position()) : member.getPosition()
         );
         log.info("[member] 내 정보 수정 id={}", id);
         return MemberDto.Detail.from(member);
+    }
+
+    // 프로필 이미지 변경: 새 이미지와 썸네일을 저장하고, 예전 파일은 지운다.
+    @Transactional
+    public MemberDto.ProfileImage changeProfileImage(Long id, MultipartFile file) {
+        LoginEntity member = loginService.getActiveMember(id);
+        String oldImage = member.getProfileImage();
+        String oldThumbnail = member.getProfileThumbnail();
+
+        ProfileImageService.Stored stored = profileImageService.store(file);
+        member.changeProfileImage(stored.imageName(), stored.thumbnailName());
+        profileImageService.delete(oldImage, oldThumbnail);
+
+        log.info("[member] 프로필 이미지 변경 id={}", id);
+        return new MemberDto.ProfileImage(
+                ProfileImageService.urlOf(stored.imageName()),
+                ProfileImageService.urlOf(stored.thumbnailName()));
+    }
+
+    // 비밀번호 변경: 현재 비밀번호를 확인한 뒤 새 비밀번호로 바꾼다.
+    //  - 바꾼 뒤에는 발급돼 있던 Refresh 토큰을 모두 지운다. (다른 기기 포함, 다시 로그인해야 한다)
+    @Transactional
+    public void changePassword(Long id, MemberDto.PasswordRequest request) {
+        LoginEntity member = loginService.getActiveMember(id);
+
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
+            throw new BusinessException(ErrorCode.CURRENT_PASSWORD_MISMATCH);
+        }
+        if (!request.newPassword().equals(request.newPasswordConfirm())) {
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        member.changePassword(passwordEncoder.encode(request.newPassword()));
+        tokenService.revokeAll(id);
+        log.info("[member] 비밀번호 변경 id={}", id);
     }
 
     // 소속 부서 / 직급 선택 목록

@@ -1,25 +1,22 @@
 package com.grtc.main.login.controller;
 
+import com.grtc.main.global.common.ApiResponse;
+import com.grtc.main.global.security.RefreshCookieFactory;
 import com.grtc.main.login.dto.LoginRequestDto;
 import com.grtc.main.login.dto.LoginResponseDto;
+import com.grtc.main.login.dto.LoginResult;
 import com.grtc.main.login.dto.SignUpRequestDto;
 import com.grtc.main.login.dto.SignUpResponseDto;
+import com.grtc.main.login.dto.TokenResponse;
 import com.grtc.main.login.service.LoginService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import com.grtc.main.login.service.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,11 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
-// 로그인/회원가입 API 요청을 처리하는 REST 컨트롤러
+// 인증 API (명세서 3-3 ① 인증) - 회원가입 / 로그인 / 토큰 재발급 / 로그아웃
+//   Base URL: /api/v1
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class LoginRestController {
 
@@ -41,80 +37,63 @@ public class LoginRestController {
 
     // 회원 비즈니스 로직을 처리하는 서비스
     private final LoginService loginService;
-    // 인증 정보를 세션에 저장하는 저장소
-    private final SecurityContextRepository securityContextRepository;
+    // Access / Refresh 토큰 발급·재발급·폐기
+    private final TokenService tokenService;
+    // Refresh 토큰 쿠키 생성
+    private final RefreshCookieFactory refreshCookieFactory;
 
-    // 아이디/비밀번호로 로그인하고 세션에 인증 정보를 저장하는 API
-    // 응답의 redirectPath: 관리자 -> /dashboard, 일반 사용자 -> /complaints
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(
-            @Valid
-            @RequestBody
-            LoginRequestDto request,
-            HttpServletRequest httpServletRequest,
-            HttpServletResponse httpServletResponse
-    )
-    {
-        // 서비스에서 아이디/비밀번호를 검증하고 회원 정보를 받아옴
-        LoginResponseDto user = loginService.login(request);
-
-        // 세션이 없으면 새로 생성
-        httpServletRequest.getSession(true);
-        // 세션 고정 공격 방지를 위해 세션 ID 재발급
-        httpServletRequest.changeSessionId();
-
-        // 회원 권한을 ROLE_ 접두사가 붙은 스프링 시큐리티 권한 목록으로 변환
-        List<GrantedAuthority> authorities =
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-        // 회원 ID와 권한으로 인증 완료된 인증 객체 생성
-        Authentication authentication =
-                UsernamePasswordAuthenticationToken.authenticated(user.getId(), null, authorities);
-        // 빈 시큐리티 컨텍스트 생성
-        SecurityContext context =
-                SecurityContextHolder.createEmptyContext();
-        // 컨텍스트에 인증 객체 저장
-        context.setAuthentication(authentication);
-        // 컨텍스트를 세션에 저장해 로그인 상태 유지
-        securityContextRepository.saveContext(context, httpServletRequest, httpServletResponse);
-
-        // 200 OK와 회원 정보 반환
-        return ResponseEntity.ok(user);
+    // 회원가입 (권한: 전체) - 계정을 만들고 201 응답
+    @PostMapping("/signup")
+    public ResponseEntity<ApiResponse<SignUpResponseDto>> signup(@Valid @RequestBody SignUpRequestDto request) {
+        SignUpResponseDto response = loginService.signUp(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
-   // 회원가입 요청을 받아 계정을 생성하고 201 응답을 반환하는 API
-   @PostMapping("/signup")
-    public ResponseEntity<SignUpResponseDto> signup(
-            @Valid
-            @RequestBody
-            SignUpRequestDto request
-   )
-   {
-       // 서비스에서 회원가입 처리 후 가입된 회원 정보를 받아옴
-       SignUpResponseDto response = loginService.signUp(request);
 
-       // 201 Created와 가입된 회원 정보 반환
-       return ResponseEntity.status(HttpStatus.CREATED).body(response);
-   }
-
-    // 회원가입 화면에서 아이디 사용 가능 여부를 확인하는 API
+    // 회원가입 화면의 아이디 사용 가능 여부 확인 (권한: 전체)
     @GetMapping("/check-id")
-    public ResponseEntity<CheckIdResponse> checkId(@RequestParam String loginId) {
-        return ResponseEntity.ok(new CheckIdResponse(loginService.isLoginIdAvailable(loginId)));
+    public ApiResponse<CheckIdResponse> checkId(@RequestParam String loginId) {
+        return ApiResponse.ok(new CheckIdResponse(loginService.isLoginIdAvailable(loginId)));
     }
 
-    // 로그인한 회원 본인의 정보를 조회하는 API (사이드바 하단 이름/아이디, 권한별 메뉴 표시용)
-    @GetMapping("/me")
-    public ResponseEntity<LoginResponseDto> me(@AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(loginService.me(userId));
+    // 로그인, 토큰 발급 (권한: 전체)
+    //   - Access 토큰: 응답 본문의 data.accessToken
+    //   - Refresh 토큰: HttpOnly 쿠키(refreshToken)
+    //   - data.member.redirectPath: 관리자 -> /dashboard, 일반 사용자 -> /complaints
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResult>> login(@Valid @RequestBody LoginRequestDto request) {
+        // 서비스에서 아이디/비밀번호/계정 상태를 검증하고 회원 정보를 받아옴
+        LoginResponseDto member = loginService.login(request);
+
+        String accessToken = tokenService.createAccessToken(member);
+        String refreshToken = tokenService.issueRefreshToken(member.getId());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookieFactory.create(refreshToken).toString())
+                .body(ApiResponse.ok(LoginResult.bearer(accessToken, tokenService.accessExpiresIn(), member)));
     }
 
-    // 로그아웃: 세션을 없애고 인증 정보를 비우는 API
+    // Access 토큰 재발급 (권한: 전체) - 쿠키의 Refresh 토큰 사용
+    //   Access 토큰이 만료되어 401 TOKEN_EXPIRED 를 받았을 때 호출한다.
+    @PostMapping("/reissue")
+    public ApiResponse<TokenResponse> reissue(
+            @CookieValue(name = RefreshCookieFactory.COOKIE_NAME, required = false) String refreshToken) {
+        return ApiResponse.ok(tokenService.reissue(refreshToken));
+    }
+
+    // 로그아웃 (권한: 회원) - Refresh 토큰 기록을 지우고 쿠키도 삭제
+    //   Access 토큰은 프론트에서 버린다. (서버에 저장하지 않으므로 만료될 때까지는 형식상 유효)
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest httpServletRequest) {
-        HttpSession session = httpServletRequest.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-        SecurityContextHolder.clearContext();
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @CookieValue(name = RefreshCookieFactory.COOKIE_NAME, required = false) String refreshToken) {
+        tokenService.revoke(refreshToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookieFactory.expire().toString())
+                .body(ApiResponse.ok());
+    }
+
+    // 로그인한 회원 본인의 요약 정보 (권한: 회원) - 사이드바 하단 이름/아이디, 권한별 메뉴 표시, 새로고침 후 로그인 확인용
+    @GetMapping("/me")
+    public ApiResponse<LoginResponseDto> me(@AuthenticationPrincipal Long userId) {
+        return ApiResponse.ok(loginService.me(userId));
     }
 }
