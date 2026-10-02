@@ -1,0 +1,5 @@
+<script setup>
+defineProps({ type: String })
+</script>
+<template><span class="dashboard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><template v-if="type === 'train' || type === 'vehicle'"><rect x="5" y="3" width="14" height="16" rx="4" /><path d="M5 11h14M12 4v7M8 19l-2 3m10-3 2 3" /><circle cx="8" cy="15" r="1" /><circle cx="16" cy="15" r="1" /></template><template v-else-if="type === 'chart'"><path d="M11 3a9 9 0 1 0 10 10H11Z" /><path d="M15 3v6h6a8 8 0 0 0-6-6Z" /></template><template v-else-if="type === 'complaint'"><path d="m4 9 13-5v16L4 15ZM4 9H2v6h2m3 1 2 6h4l-2-5M20 8l2-1m-2 9 2 1" /></template><template v-else><path d="M21 12a9 9 0 0 1-9 9H3l2-5a9 9 0 1 1 16-4Z" /><path d="m8 12 3 3 5-6" /></template></svg></span></template>
+<style scoped>.dashboard-icon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; background: #eaf6fc; border-radius: 50%; color: #087bb4; }.dashboard-icon svg { width: 23px; height: 23px; }</style>
