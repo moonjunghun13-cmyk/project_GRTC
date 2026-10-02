@@ -84,7 +84,7 @@ public enum ErrorCode {
     COMPLAIN_NOT_MODIFIABLE(HttpStatus.CONFLICT,
             "COMPLAIN_NOT_MODIFIABLE", "접수 대기 상태의 민원만 수정하거나 삭제할 수 있습니다."),
     INVALID_ANSWER_STATUS(HttpStatus.BAD_REQUEST,
-            "INVALID_ANSWER_STATUS", "답변 처리상태는 접수, 이관, 답변완료 중에서 선택해주세요."),
+            "INVALID_ANSWER_STATUS", "답변 처리상태는 답변중, 답변완료, 이관안내 중에서 선택해주세요."),
     COMPLAIN_NOT_OWNER(HttpStatus.FORBIDDEN,
             "COMPLAIN_NOT_OWNER", "본인이 작성한 민원만 수정하거나 삭제할 수 있습니다."),
 

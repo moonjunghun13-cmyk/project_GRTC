@@ -77,7 +77,7 @@ public class ComplainService {
         return toDetail(saved, adminId);
     }
 
-    // 답변 등록/수정: 처리상태(접수/이관/답변완료)와 답변 내용을 함께 저장
+    // 답변 등록/수정: 처리상태(답변중/답변완료/이관안내)와 답변 내용을 함께 저장
     @Transactional
     public ComplainDto.Detail answer(Long adminId, Long id, ComplainDto.AnswerRequest request) {
         MemberEntity admin = adminMemberService.getActiveAdmin(adminId);

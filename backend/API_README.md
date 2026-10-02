@@ -85,7 +85,7 @@
 | 400 | CANNOT_MODIFY_SELF | 관리자가 본인의 역할·상태를 변경하려 함 |
 | 400 | INVALID_DISPATCH_TIME | 도착시간이 출발시간보다 빠르거나 같음 |
 | 400 | DISPATCH_CANCELLED | 취소된 배차를 수정하려 함 |
-| 400 | INVALID_ANSWER_STATUS | 민원 답변 처리상태가 접수·이관·답변완료가 아님 |
+| 400 | INVALID_ANSWER_STATUS | 민원 답변 처리상태가 답변중·답변완료·이관안내가 아님 |
 | 400 | FILE_TOO_MANY | 첨부파일 개수 초과(민원 1건당 5개) |
 | 400 | FILE_INVALID_NAME | 첨부파일 이름이 올바르지 않음 |
 | 401 | UNAUTHORIZED | 인증 정보 없음(토큰 없음·잘못됨, Refresh 토큰 만료) |
@@ -254,10 +254,45 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | GET | /api/admin/complaints/options | 유형·분류·처리상태 선택 목록 | 관리자 |
 | GET | /api/admin/complaints/{id} | 민원 상세 | 관리자 |
 | POST | /api/admin/complaints | 민원 등록(multipart) | 관리자 |
-| PUT | /api/admin/complaints/{id}/answer | 답변 등록(status: RECEIVED, TRANSFERRED, ANSWERED / content) | 관리자 |
+| PUT | /api/admin/complaints/{id}/answer | 답변 등록(status: RECEIVED, ANSWERED, TRANSFERRED / content) | 관리자 |
 | GET | /api/admin/complaints/{id}/attachments/{attachmentId} | 첨부파일 다운로드 | 관리자 |
 
 - 유형(type): SIMPLE(단순), SUGGESTION(건의), REPORT(제보), COMPLAINT(불만)
 - 분류(category): OPERATION(운행관련), FACILITY(시설물), ROUTE_TIME(노선/시간), FARE_PAYMENT(요금/결제), ETC(기타)
-- 처리상태(status): WAITING(접수대기), RECEIVED(접수), TRANSFERRED(이관), ANSWERED(답변완료)
+- 처리상태(status): WAITING(접수대기), RECEIVED(답변중), ANSWERED(답변완료), TRANSFERRED(이관안내)
 - 첨부파일은 jpg, png, gif, pdf 만 가능하고 파일당 10MB 이하, 민원 1건당 최대 5개입니다.
+
+**민원 분류(category) 등록**
+
+일반 사용자가 민원 양식에서 고른 분류가 그대로 그 민원의 분류로 저장됩니다.
+
+- 민원 양식의 분류 선택 목록은 `GET /api/complaints/options` 응답의 `categories` 를 씁니다. `code` 를 서버로 보내고 `label` 을 화면에 보여줍니다.
+- 등록(`POST /api/complaints`)과 수정(`PUT /api/complaints/{id}`)에서 `category` 는 multipart 의 일반 필드로, 위 `code` 값을 보냅니다. 예) `category=FACILITY`
+- `category` 는 선택 항목입니다. 보내지 않거나 비워 두면 `ETC`(기타)로 저장됩니다. (`type`, `title`, `content` 는 필수)
+- 저장된 분류는 목록·상세 응답에 `category`(코드)와 `categoryLabel`(화면 표시용 이름)로 내려가고, 목록의 `category` 필터로 검색할 수 있습니다.
+- 관리자 민원 등록(`POST /api/admin/complaints`)도 같은 규칙입니다.
+
+선택 목록 응답:
+
+```json
+{
+  "types": [ { "code": "SIMPLE", "label": "단순" } ],
+  "categories": [
+    { "code": "OPERATION", "label": "운행관련" },
+    { "code": "FACILITY", "label": "시설물" },
+    { "code": "ROUTE_TIME", "label": "노선/시간" },
+    { "code": "FARE_PAYMENT", "label": "요금/결제" },
+    { "code": "ETC", "label": "기타" }
+  ],
+  "statuses": [ { "code": "WAITING", "label": "접수대기" } ]
+}
+```
+
+등록·상세 응답에서 분류 부분:
+
+```json
+{
+  "category": "FACILITY",
+  "categoryLabel": "시설물"
+}
+```

@@ -37,7 +37,7 @@ public final class DashboardDto {
     ) {
     }
 
-    // 답변건수 카드 (총 N건 + 처리상태별 진행바: 접수대기/접수/이관/답변완료)
+    // 답변건수 카드 (총 N건 + 처리상태별 진행바: 접수대기/답변중/답변완료/이관안내)
     public record AnswerCountCard(
             String period,
             String periodLabel,

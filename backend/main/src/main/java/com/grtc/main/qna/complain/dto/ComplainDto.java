@@ -64,7 +64,7 @@ public final class ComplainDto {
             String title,
             String writerName,
             ComplainStatus status,
-            String statusLabel,       // 접수대기 / 접수 / 이관 / 답변완료
+            String statusLabel,       // 접수대기 / 답변중 / 답변완료 / 이관안내
             String progressLabel,     // 미처리 / 처리중 / 처리완료 (목록 화면 표시용)
             boolean mine              // 보는 사람이 쓴 민원인지 (false 면 상세보기가 열리지 않으므로 버튼 비활성화용)
     ) {
