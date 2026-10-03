@@ -1,11 +1,16 @@
 spring:
   application:
     name: main
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/project
+    # DB 이름: 환경변수 DB_NAME 이 있으면 그 값, 없으면 project (예: setx DB_NAME grtc)
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:project}
     username: postgres
-    password: 1004
+    # 비밀번호가 1004가 아니면 PC 환경변수 DB_PASSWORD 로 지정 (예: setx DB_PASSWORD 내비밀번호). 없으면 1004
+    password: ${DB_PASSWORD:1004}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -16,5 +21,24 @@ spring:
       hibernate:
         format_sql: true
     show-sql: false
+
+# 우리 프로젝트 전용 설정 (spring: 아래가 아니라 최상위에 있어야 @Value("${app...}") 로 읽힌다)
+app:
+  file:
+    upload-dir: C:/mmg/uploads
+  cors:
+    allowed-origins: http://localhost:5173
+  seed:
+    enabled: true   # 관리자 계정(admin) + 노선/역/차량/운행/배차 예시 데이터 자동 생성. 운영 환경에서는 false
+  # 로그인 토큰(JWT) 설정 - 명세서 3-1: Access 30분, Refresh 14일(HttpOnly 쿠키)
+  jwt:
+    # 서명 키(32자 이상). (서버를 하나로 합쳐서 이제 이 값 하나만 관리하면 된다)
+    # 아래 값은 개발용이다. 운영 환경에서는 다른 값으로 바꾸고 외부에 공개하지 않는다.
+    secret: 1zYDlfjMbLuLIKe5todcGclf_mQod8dcuWH2AMK7lGAerKnL5EbX3Y0mZUj5H0IK
+    access-expiration-minutes: 30
+    refresh-expiration-days: 14
+    refresh-cookie-secure: false   # 운영(HTTPS)에서는 true
+
+# 통합 서버 (예전 main 8081 + dashboard 8082 -> 8081 하나)
 server:
   port: 8081

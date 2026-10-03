@@ -1,0 +1,146 @@
+package com.grtc.main.admin.member;
+
+import com.grtc.main.global.common.PageResponse;
+import com.grtc.main.global.common.SearchUtil;
+import com.grtc.main.global.exception.BusinessException;
+import com.grtc.main.global.exception.ErrorCode;
+import com.grtc.main.login.entity.LoginEntity;
+import com.grtc.main.login.entity.MemberStatus;
+import com.grtc.main.login.entity.Role;
+import com.grtc.main.login.repository.LoginRepository;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+// 회원관리(조회/검색/수정/상태·권한 변경) 비즈니스 로직
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class AdminMemberManageService {
+
+    // 회원정보 화면의 선택 목록 (필요하면 여기만 수정하면 된다)
+    public static final List<String> DEPARTMENTS = List.of("운영팀", "차량팀", "시설팀", "안전관리팀", "고객지원팀");
+    public static final List<String> POSITIONS = List.of("시스템 관리자", "팀장", "대리", "사원");
+
+    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 가입 순서대로
+    public static final Sort DEFAULT_SORT = Sort.by("id");
+    public static final Set<String> SORTABLE =
+            Set.of("id", "name", "loginId", "email", "role", "status", "createdAt");
+
+    private final LoginRepository memberRepository;
+
+    // 회원관리 목록: 이름/아이디/이메일 검색 + 권한/상태 필터 + 페이징
+    public PageResponse<AdminMemberDto.ListItem> list(String keyword, Role role, MemberStatus status, Pageable pageable) {
+        Specification<LoginEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (SearchUtil.hasText(keyword)) {
+                String like = SearchUtil.contains(keyword);
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.<String>get("name")), like, SearchUtil.ESCAPE),
+                        cb.like(cb.lower(root.<String>get("loginId")), like, SearchUtil.ESCAPE),
+                        cb.like(cb.lower(root.<String>get("email")), like, SearchUtil.ESCAPE)
+                ));
+            }
+            if (role != null) {
+                predicates.add(cb.equal(root.get("role"), role));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<LoginEntity> result = memberRepository.findAll(spec, pageable);
+
+        // 번호는 검색 결과 기준 순번 (페이지가 넘어가도 이어서 증가)
+        int base = result.getNumber() * result.getSize();
+        List<LoginEntity> rows = result.getContent();
+        List<AdminMemberDto.ListItem> items = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            items.add(AdminMemberDto.ListItem.of(base + i + 1, rows.get(i)));
+        }
+        return PageResponse.from(result, items);
+    }
+
+    // 회원 상세 조회
+    public AdminMemberDto.Detail get(Long id) {
+        return AdminMemberDto.Detail.from(find(id));
+    }
+
+    // 회원정보 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
+    @Transactional
+    public AdminMemberDto.Detail update(Long id, AdminMemberDto.UpdateRequest request) {
+        LoginEntity member = find(id);
+
+        String name = request.name() != null ? request.name().trim() : member.getName();
+
+        String email = member.getEmail();
+        if (request.email() != null) {
+            email = request.email().trim().toLowerCase(Locale.ROOT);
+            if (memberRepository.existsByEmailAndIdNot(email, id)) {
+                throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            }
+        }
+
+        member.updateProfile(
+                name,
+                email,
+                request.phone() != null ? blankToNull(request.phone()) : member.getPhone(),
+                request.department() != null ? blankToNull(request.department()) : member.getDepartment(),
+                request.position() != null ? blankToNull(request.position()) : member.getPosition()
+        );
+        log.info("[member] 회원정보 수정 id={}", id);
+        return AdminMemberDto.Detail.from(member);
+    }
+
+    // 회원 상태 변경 (정상 / 이용정지 / 탈퇴) - 본인 계정은 막는다(관리자가 스스로 잠기는 것 방지)
+    @Transactional
+    public AdminMemberDto.Detail changeStatus(Long adminId, Long id, MemberStatus status) {
+        if (adminId.equals(id)) {
+            throw new BusinessException(ErrorCode.CANNOT_MODIFY_SELF);
+        }
+        LoginEntity member = find(id);
+        member.changeStatus(status);
+        log.info("[member] 상태 변경 id={} status={}", id, status);
+        return AdminMemberDto.Detail.from(member);
+    }
+
+    // 회원 권한 변경 (관리자 / 일반회원) - 본인 계정은 막는다
+    @Transactional
+    public AdminMemberDto.Detail changeRole(Long adminId, Long id, Role role) {
+        if (adminId.equals(id)) {
+            throw new BusinessException(ErrorCode.CANNOT_MODIFY_SELF);
+        }
+        LoginEntity member = find(id);
+        member.changeRole(role);
+        log.info("[member] 권한 변경 id={} role={}", id, role);
+        return AdminMemberDto.Detail.from(member);
+    }
+
+    // 소속 부서 / 직급 선택 목록
+    public AdminMemberDto.Options options() {
+        return new AdminMemberDto.Options(DEPARTMENTS, POSITIONS);
+    }
+
+    private LoginEntity find(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    // 빈 문자열은 null 로 저장 (이메일처럼 unique 컬럼에 "" 가 중복 저장되는 것도 방지)
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
+    }
+}
