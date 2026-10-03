@@ -10,7 +10,7 @@ const logoutError = ref('')
 async function logout() {
   if (logoutBusy.value) return
   logoutBusy.value = true
-  try { logoutCurrentUser(); await router.replace('/') }
+  try { await logoutCurrentUser(); await router.replace('/') }
   catch (error) { logoutError.value = error.message }
   finally { logoutBusy.value = false }
 }

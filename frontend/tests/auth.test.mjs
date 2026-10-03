@@ -13,20 +13,25 @@ test('API contract, session restoration, concurrency and guarded routes', { skip
   assert.equal(mainApi.defaults.withCredentials, true)
   assert.equal(dashboardApi.defaults.withCredentials, true)
   const requests = []
-  let user = { id: 1, name: '검증 사용자', nickname: 'tester', role: 'USER' }
+  let user = { id: 1, name: '검증 사용자', loginId: 'tester', role: 'USER' }
+  // 백엔드 공통 응답 { success, data, error } 형식
   mainApi.defaults.adapter = async config => {
     requests.push(config)
-    return { data: config.url === '/api/auth/me' ? user : { redirectPath: '/complaints' }, status: 200, statusText: 'OK', headers: {}, config }
+    const data = config.url === '/api/v1/auth/me' ? user
+      : config.url === '/api/v1/auth/login' ? { accessToken: 'test-token', tokenType: 'Bearer', expiresIn: 1800, member: { ...user, redirectPath: '/complaints' } }
+      : { id: 2 }
+    return { data: { success: true, data, error: null }, status: 200, statusText: 'OK', headers: {}, config }
   }
   await login('tester', 'test-password!')
-  assert.deepEqual(JSON.parse(requests.at(-1).data), { loginId: 'tester', password: 'test-password!' })
+  assert.deepEqual(requests.at(-1).data, { loginId: 'tester', password: 'test-password!' })
   await signup({ username:'tester', name:'검증 사용자', email:'example@email.com', password:'password!', passwordConfirmation:'password!', ageConfirmed:true })
-  assert.deepEqual(JSON.parse(requests.at(-1).data), { nickname:'tester', name:'검증 사용자', email:'example@email.com', password:'password!', over14:true })
+  assert.deepEqual(requests.at(-1).data, { name:'검증 사용자', loginId:'tester', email:'example@email.com', password:'password!', passwordConfirm:'password!', over14:true })
   auth.clear()
   const count = requests.length
   await Promise.all([auth.restore(), auth.restore()])
   assert.equal(requests.length, count + 1)
-  assert.deepEqual(auth.profile.value, { name:'검증 사용자', username:'tester' })
+  assert.deepEqual(auth.profile.value, { name:'검증 사용자', username:'tester', role:'USER' })
+  assert.equal(requests.at(-1).headers.Authorization, 'Bearer test-token')
   await auth.restore()
   assert.equal(requests.length, count + 1)
   const source = (await readFile(new URL('../src/router/index.js', import.meta.url), 'utf8'))
@@ -49,16 +54,16 @@ test('API contract, session restoration, concurrency and guarded routes', { skip
   auth.clear(); await auth.restore()
   await router.push('/dashboard')
   assert.equal(router.currentRoute.value.path, '/dashboard')
-  assert.equal(authError({ response:{status:401,data:{code:'A002'}} }), 'unauthorized')
-  assert.equal(authError({ response:{status:403,data:{code:'A001'}} }), 'forbidden')
-  mainApi.defaults.adapter = async config => { throw { config, response:{status:401,data:{code:'A002',message:'로그인이 필요합니다.'}} } }
+  assert.equal(authError({ response:{status:401,data:{error:{code:'UNAUTHORIZED'}}} }), 'unauthorized')
+  assert.equal(authError({ response:{status:403,data:{error:{code:'FORBIDDEN'}}} }), 'forbidden')
+  mainApi.defaults.adapter = async config => { throw { config, response:{status:401,data:{success:false,data:null,error:{code:'UNAUTHORIZED',message:'로그인이 필요합니다.'}}} } }
   await assert.rejects(mainApi.get('/api/private'))
   await router.isReady()
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(auth.state.user, null)
   assert.equal(router.currentRoute.value.path, '/login')
   user = { role:'USER' }
-  mainApi.defaults.adapter = async config => ({data:user,status:200,headers:{},config})
+  mainApi.defaults.adapter = async config => ({data:{success:true,data:user,error:null},status:200,headers:{},config})
   auth.clear()
   await assert.rejects(auth.restore(), /응답 명세 확인/)
   assert.equal(auth.state.user, null)

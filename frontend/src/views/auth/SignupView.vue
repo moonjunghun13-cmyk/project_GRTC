@@ -19,12 +19,13 @@ function validateEmail() {
 async function submit() {
   if (busy.value || !validateEmail()) return
   if (form.password !== form.passwordConfirmation) { message.value = '비밀번호가 일치하지 않습니다.'; return }
-  if (form.username.length > 30) { message.value = '아이디는 최대 30자까지 입력 가능합니다.'; return }
+  if (form.username.length < 4 || form.username.length > 20) { message.value = '아이디는 4자 이상 20자 이하로 입력해주세요.'; return }
+  if (!/^[A-Za-z0-9_]+$/.test(form.username)) { message.value = '아이디는 영문, 숫자, 밑줄(_)만 사용할 수 있습니다.'; return }
   if (form.password.length < 8 || !/[^A-Za-z0-9]/.test(form.password)) { message.value = '비밀번호는 8자 이상이며 특수문자를 포함해야 합니다.'; return }
   busy.value = true
   message.value = ''
   try {
-    // SignUpRequestDto uses nickname for the existing ID field and over14 for consent.
+    // 백엔드 SignUpRequestDto: name, loginId, email, password, passwordConfirm, over14
     await signup(form)
     message.value = '회원가입이 완료되었습니다. 로그인해 주세요.'
   } catch (error) { message.value = errorMessage(error) }

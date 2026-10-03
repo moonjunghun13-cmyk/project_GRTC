@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+# 개인 PC 설정 (각자 .env.example 을 복사해서 사용)
+.env
 
 # Editor directories and files
 .vscode/*

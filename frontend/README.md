@@ -4,8 +4,13 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
-## 백엔드 연동 기준 (현재 연결 보류)
+## 백엔드 연동 기준
 
-최신 기준은 [docs/backend-api.md](docs/backend-api.md), 변경점과 확인 사항은 [docs/backend-integration-plan.md](docs/backend-integration-plan.md)입니다. 이전 SESSION 계약은 최신 JWT 계약으로 대체됐습니다.
+최신 기준은 [../docs/backend-api.md](../docs/backend-api.md)입니다. 백엔드는 통합 서버 하나(`http://localhost:8081`)입니다.
 
-현재는 프론트 화면 제작 단계로 mock 미리보기와 `VITE_ENABLE_API=false`를 유지합니다. 서버 주소는 `.env.example`의 Vite 환경변수로 관리합니다. 기존 비활성 연동 코드와 인증 계약 테스트는 이전 명세 기반이므로, 최신 계약 반영 및 최종 연결 요청 전에는 활성화하지 마세요.
+- **연동 완료:** 회원가입 · 로그인 · 내 정보(`/api/v1/auth/me`) · 로그아웃 · Access 토큰 자동 재발급(401 `TOKEN_EXPIRED` → `/api/v1/auth/reissue`)
+  - Access 토큰은 `Authorization: Bearer` 헤더로 자동 첨부됩니다. (`src/api/clients.js`)
+  - 응답 본문의 `data` 는 `unwrap(response)` 로 꺼냅니다.
+- **아직 mock:** 대시보드, 차량, 배차, 운행, 민원, 회원관리 화면
+
+`.env` 의 `VITE_ENABLE_API=true` 로 바꾸면 실제 서버와 연결됩니다. (`false` 면 mock 미리보기)
