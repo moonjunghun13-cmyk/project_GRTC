@@ -18,7 +18,13 @@ project_GRTC
 
 ### 1. DB 준비 (처음 한 번)
 
-PostgreSQL에 `project` 데이터베이스를 만듭니다. 접속 정보는 `backend/main/src/main/resources/application.yaml` 기준입니다. (사용자 `postgres`)
+PostgreSQL에 `project` 데이터베이스를 만듭니다. 접속 정보는 `backend/main/src/main/resources/application.yaml` 기준입니다. (사용자 `postgres`, 비밀번호 기본값 `1004`)
+
+postgres 비밀번호가 `1004`가 아니면 PowerShell에서 한 번만 아래를 실행하고 IntelliJ를 다시 켭니다.
+
+```powershell
+setx DB_PASSWORD 내비밀번호
+```
 
 ```sql
 CREATE DATABASE project;
