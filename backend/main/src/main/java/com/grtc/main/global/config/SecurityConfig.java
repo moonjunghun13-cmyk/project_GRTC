@@ -1,6 +1,8 @@
 package com.grtc.main.global.config;
 
 import com.grtc.main.global.exception.ErrorCode;
+import com.grtc.main.global.security.AdminAccessFilter;
+import com.grtc.main.global.security.AdminMemberService;
 import com.grtc.main.global.security.JsonErrorWriter;
 import com.grtc.main.global.security.JwtAuthenticationFilter;
 import com.grtc.main.global.security.JwtProvider;
@@ -15,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -22,10 +25,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-// main 서버(공통 + 일반 사용자) 보안 설정 - JWT 방식 (명세서 3-1)
+// 통합 서버 보안 설정 - JWT 방식 (명세서 3-1)
+//  - 예전 main(공통·일반 사용자) + dashboard(관리자) 두 서버를 하나로 합쳤다. 포트 8081 하나만 쓴다.
 //  - 로그인하면 Access 토큰(30분)을 응답 본문으로, Refresh 토큰(14일)을 HttpOnly 쿠키로 내려준다.
 //  - 이후 요청은 "Authorization: Bearer {accessToken}" 헤더로 인증한다. 서버는 세션을 만들지 않는다.
-//  - 같은 토큰으로 dashboard(관리자) 서버도 호출할 수 있다. (두 서버의 app.jwt.secret 이 같아야 함)
+//  - 관리자 API(/api/v1/admin/**, /api/admin/**)는 ADMIN 권한 + AdminAccessFilter(DB 최신 권한·상태 재확인)로 이중 확인한다.
 @Configuration
 public class SecurityConfig {
     @Bean
@@ -34,7 +38,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider,
+                                                   AdminMemberService adminMemberService) throws Exception{
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 // Vue(다른 포트)에서 호출할 수 있도록 CORS 허용
@@ -50,7 +55,7 @@ public class SecurityConfig {
                         // 프로필 이미지는 <img src> 로 불러오므로 토큰 없이 조회 가능 (파일명은 추측할 수 없는 임의 값)
                         .requestMatchers(HttpMethod.GET, "/api/v1/files/profile/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        // 관리자 전용 API 는 dashboard 서버에 있지만, 혹시 이 서버에 추가되더라도 막아 둔다.
+                        // 권한 "관리자": 관리자 화면 API (예전 dashboard 서버)
                         .requestMatchers("/api/v1/admin/**", "/api/admin/**").hasRole("ADMIN")
                         // 권한 "회원": 그 밖의 모든 API 는 로그인 필요
                         .anyRequest().authenticated()
@@ -63,7 +68,9 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, ex) ->
                                 JsonErrorWriter.write(response, ErrorCode.ADMIN_ONLY))
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                // 권한 검사를 통과한 관리자 API 요청에 대해 DB 최신 권한·상태 확인 (정지·탈퇴·권한 변경 즉시 반영)
+                .addFilterAfter(new AdminAccessFilter(adminMemberService), AuthorizationFilter.class);
         return http.build();
     }
 

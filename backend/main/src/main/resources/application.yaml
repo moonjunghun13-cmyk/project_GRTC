@@ -27,15 +27,16 @@ app:
   cors:
     allowed-origins: http://localhost:5173
   seed:
-    enabled: true   # 관리자 계정(admin) 자동 생성. 운영 환경에서는 false
+    enabled: true   # 관리자 계정(admin) + 노선/역/차량/운행/배차 예시 데이터 자동 생성. 운영 환경에서는 false
   # 로그인 토큰(JWT) 설정 - 명세서 3-1: Access 30분, Refresh 14일(HttpOnly 쿠키)
   jwt:
-    # 서명 키(32자 이상). dashboard 서버의 app.jwt.secret 과 반드시 같은 값이어야 한다.
+    # 서명 키(32자 이상). (서버를 하나로 합쳐서 이제 이 값 하나만 관리하면 된다)
     # 아래 값은 개발용이다. 운영 환경에서는 다른 값으로 바꾸고 외부에 공개하지 않는다.
     secret: 1zYDlfjMbLuLIKe5todcGclf_mQod8dcuWH2AMK7lGAerKnL5EbX3Y0mZUj5H0IK
     access-expiration-minutes: 30
     refresh-expiration-days: 14
     refresh-cookie-secure: false   # 운영(HTTPS)에서는 true
 
+# 통합 서버 (예전 main 8081 + dashboard 8082 -> 8081 하나)
 server:
   port: 8081

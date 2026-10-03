@@ -4,16 +4,16 @@
 
 ### 3-0. 서버 구성
 
-백엔드는 두 개의 서버로 나뉩니다. 두 서버는 같은 PostgreSQL DB(`project`)를 씁니다.
+백엔드는 **서버 하나**(`main` 폴더, `http://localhost:8081`)입니다. 예전에는 main(8081)과 dashboard(8082) 두 서버였지만 하나로 합쳤습니다.
 
-| 서버 | 폴더 | 주소 | 담당 |
+| 구분 | 패키지 | 주소 | 담당 |
 | --- | --- | --- | --- |
-| main | `main` | `http://localhost:8081` | 공통(회원가입, 로그인, 토큰) + 일반 사용자 화면(민원관리, 내 정보) |
-| dashboard | `dashboard` | `http://localhost:8082` | 관리자 화면(대시보드, 차량관리, 배차관리, 운행관리, 민원관리, 회원관리) |
+| 공통·일반 사용자 | `com.grtc.main.login`, `member`, `qna` | `/api/v1/auth/**`, `/api/v1/members/**`, `/api/complaints/**` | 회원가입, 로그인, 토큰, 내 정보, 민원 작성·조회 |
+| 관리자 | `com.grtc.main.admin.*` | `/api/v1/admin/**`, `/api/admin/complaints/**` | 대시보드, 차량, 배차, 운행, 민원 처리, 회원 관리 |
 
-- 로그인은 main 서버에서만 합니다. 로그인으로 받은 Access 토큰 하나로 두 서버를 모두 호출합니다.
-- 두 서버의 `application.yaml` 에 있는 `app.jwt.secret` 값은 반드시 같아야 합니다.
-- 아래 3-3 API 목록에서 **[main]** 은 8081, **[dashboard]** 는 8082 서버의 API 입니다.
+- 로그인으로 받은 Access 토큰 하나로 모든 API 를 호출합니다.
+- 관리자 API 는 `ADMIN` 권한 확인 + `AdminAccessFilter`(DB 의 최신 권한·상태 재확인)로 이중 확인합니다.
+- 아래 3-3 API 목록의 **[main]**, **[dashboard]** 표시는 예전 구분입니다. 지금은 모두 8081 서버입니다.
 
 ### 3-1. 공통 규칙
 

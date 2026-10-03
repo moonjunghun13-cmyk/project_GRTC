@@ -14,7 +14,6 @@ import java.util.Date;
 
 // Access 토큰(JWT) 발급 / 검증 (명세서 3-1: Access 토큰 30분)
 //   - 토큰 안에는 회원 ID(sub), 아이디(loginId), 권한(role)을 담는다.
-//   - app.jwt.secret 은 dashboard 서버와 같은 값이어야 한다. (main 이 발급한 토큰을 dashboard 가 검증)
 @Component
 public class JwtProvider {
 
