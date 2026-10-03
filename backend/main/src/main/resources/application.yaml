@@ -6,7 +6,8 @@ spring:
       max-file-size: 10MB
       max-request-size: 30MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/project
+    # DB 이름: 환경변수 DB_NAME 이 있으면 그 값, 없으면 project (예: setx DB_NAME grtc)
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:project}
     username: postgres
     # 비밀번호가 1004가 아니면 PC 환경변수 DB_PASSWORD 로 지정 (예: setx DB_PASSWORD 내비밀번호). 없으면 1004
     password: ${DB_PASSWORD:1004}
