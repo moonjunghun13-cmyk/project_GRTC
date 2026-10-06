@@ -37,7 +37,8 @@ public final class DashboardDto {
     ) {
     }
 
-    // 답변건수 카드 (총 N건 + 처리상태별 진행바: 접수대기/답변중/답변완료/이관안내)
+    // 답변건수 카드 (총 N건 + 처리상태별 진행바: 접수대기/답변중/답변완료/이관안내/철회)
+    //  - 철회(WITHDRAWN) 항목의 count 가 기간 안에 접수됐다가 민원인이 철회한 건수다.
     public record AnswerCountCard(
             String period,
             String periodLabel,

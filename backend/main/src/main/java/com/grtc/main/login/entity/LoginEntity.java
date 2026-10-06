@@ -31,7 +31,7 @@ public class LoginEntity {
     private String name; // 이름(필수)
 
     @Column(unique = true, length = 100)
-    private String email; // 이메일(회원가입 화면에는 없어서 선택, 입력 시 중복 불가)
+    private String email; // 이메일(회원가입 때 필수로 받는다. 중복 불가. 예전에 가입한 회원은 비어 있을 수 있음)
 
     @Column(length = 20)
     private String phone; // 연락처(선택)

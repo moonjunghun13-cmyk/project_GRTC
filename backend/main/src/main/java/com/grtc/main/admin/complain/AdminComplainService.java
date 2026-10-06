@@ -7,6 +7,7 @@ import com.grtc.main.qna.complain.ComplainStatus;
 import com.grtc.main.qna.complain.ComplainType;
 import com.grtc.main.qna.file.Attachment;
 import com.grtc.main.qna.file.FileService;
+import com.grtc.main.global.common.HtmlSanitizer;
 import com.grtc.main.global.common.PageResponse;
 import com.grtc.main.global.common.Pages;
 import com.grtc.main.global.common.SearchUtil;
@@ -33,6 +34,7 @@ import java.util.List;
 
 // 민원관리(관리자) 비즈니스 로직
 //  - 전체 민원 목록/검색, 상세, 답변 등록(처리상태 변경), 관리자 민원 등록, 첨부파일 다운로드
+//  - 민원인이 철회(사용자 화면의 '삭제')한 민원도 여기서는 그대로 보인다. (처리상태 필터 status=WITHDRAWN 으로 모아 볼 수 있다)
 //  - 일반 사용자의 민원 작성/수정/삭제는 main 서버가 담당한다.
 @Slf4j
 @Service
@@ -73,6 +75,7 @@ public class AdminComplainService {
                 .category(request.category() != null ? request.category() : ComplainCategory.ETC)
                 .title(request.title().trim())
                 .content(request.content().trim())
+                .contentHtml(HtmlSanitizer.clean(request.contentHtml()))
                 .writer(admin)
                 .build());
 
@@ -86,12 +89,16 @@ public class AdminComplainService {
     public AdminComplainDto.Detail answer(Long adminId, Long id, AdminComplainDto.AnswerRequest request) {
         LoginEntity admin = adminMemberService.getActiveAdmin(adminId);
 
-        // 접수대기로 되돌리는 것은 답변이 아니므로 막는다.
-        if (request.status() == ComplainStatus.WAITING) {
+        // 접수대기로 되돌리는 것은 답변이 아니므로 막는다. 철회는 민원인만 할 수 있는 처리라 역시 막는다.
+        if (request.status() == ComplainStatus.WAITING || request.status() == ComplainStatus.WITHDRAWN) {
             throw new BusinessException(ErrorCode.INVALID_ANSWER_STATUS);
         }
 
         ComplainEntity complain = find(id);
+        // 철회된 민원에 답변하면 상태가 바뀌어 민원인 화면에 다시 나타나므로 막는다. (조회만 가능)
+        if (complain.isWithdrawn()) {
+            throw new BusinessException(ErrorCode.COMPLAIN_WITHDRAWN);
+        }
         complain.answer(request.status(), request.content().trim(), admin);
         log.info("[complain] 답변 id={} status={} adminId={}", id, request.status(), adminId);
         return toDetail(complain, adminId);
@@ -178,6 +185,7 @@ public class AdminComplainService {
                 c.getCategory().getLabel(),
                 c.getTitle(),
                 c.getContent(),
+                c.getContentHtml(),
                 c.getWriter().getId(),
                 c.getWriter().getName(),
                 c.getStatus(),
@@ -187,7 +195,8 @@ public class AdminComplainService {
                 c.getUpdatedAt(),
                 attachments,
                 answer,
-                editable
+                editable,
+                c.getWithdrawnAt()
         );
     }
 }
