@@ -1,11 +1,15 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getMember, updateMember, validateMember } from '../../../services/mockMembers'
 import { departments, ranks } from '../../../mocks/members'
 import { profileImage } from '../../../utils/profileImage'
 import './members.css'
 const route = useRoute()
+const router = useRouter()
+function cancel() {
+  router.push('/dashboard/members')
+}
 const member = computed(() => getMember(route.params.id))
 const form = reactive({ name:'', email:'', phone:'', department:'', rank:'' })
 const errors = ref({})
@@ -49,12 +53,13 @@ function save() {
               <div class="member-field"><label for="member-rank">직급 <span>*</span></label><select id="member-rank" v-model="form.rank" required :aria-invalid="!!errors.rank" :aria-describedby="errors.rank ? 'rank-error' : undefined"><option value="">선택해 주세요</option><option v-for="item in ranks" :key="item">{{ item }}</option></select><p v-if="errors.rank" id="rank-error" class="member-error">{{ errors.rank }}</p></div>
             </div>
           </div>
-          <div class="member-actions"><button class="member-cancel" type="button" @click="reset">취소</button><button class="member-save" type="submit">저장하기</button></div>
+          <div class="member-actions"><button class="member-cancel" type="button" @click="cancel">취소</button><button class="member-save" type="submit">저장하기</button></div>
           <p v-if="message" class="member-message" role="status">{{ message }}</p>
         </form>
       </section>
-      <RouterLink class="member-back" to="/dashboard/members">회원목록으로 돌아가기</RouterLink>
+
     </template>
     <section v-else class="member-edit-card member-not-found"><p>해당 회원 정보를 찾을 수 없습니다.</p><RouterLink class="member-save" to="/dashboard/members">회원목록으로 돌아가기</RouterLink></section>
   </section>
 </template>
+
