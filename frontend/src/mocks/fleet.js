@@ -1,6 +1,0 @@
-// Frontend mock view models, not an API DTO.
-export const vehicleStatuses=[{value:'RUNNING',label:'운행중',tone:'green'},{value:'STANDBY',label:'대기',tone:'blue'},{value:'MAINTENANCE',label:'정비',tone:'orange'},{value:'STOPPED',label:'운행정지',tone:'red'}]
-export const dispatchStatuses=[{value:'COMPLETED',label:'배차 완료',tone:'green'},{value:'WAITING',label:'배차 대기',tone:'blue'},{value:'CHANGED',label:'배차 변경',tone:'orange'},{value:'CANCELLED',label:'배차 취소',tone:'red'}]
-export const vehicles=Array.from({length:64},(_,i)=>({id:String(i+1),vehicleNo:'G'+String(101+i),status:vehicleStatuses[i%4].value,lastInspectionDate:'2026-09-'+String(1+i%28).padStart(2,'0')}))
-export const drivers=[{value:'김운행',label:'김운행'},{value:'이안전',label:'이안전'},{value:'박교통',label:'박교통'},{value:'최도시',label:'최도시'}]
-export const dispatches=Array.from({length:64},(_,i)=>{const v=vehicles[i%vehicles.length],hour=6+i%12;return {id:String(i+1),dispatchNo:'D'+String(1001+i),dispatchDate:'2026-10-'+String(1+i%15).padStart(2,'0'),vehicleId:v.id,vehicleNo:v.vehicleNo,driverName:drivers[i%4].value,departureTime:String(hour).padStart(2,'0')+':10:00',arrivalTime:String(hour+1).padStart(2,'0')+':40:00',status:dispatchStatuses[i%4].value,remark:['평일 배차','운전자 대기','도착시간 조정','결함 발견'][i%4]}})
