@@ -2,6 +2,7 @@ package com.grtc.main.admin.complain;
 
 import com.grtc.main.qna.complain.ComplainCategory;
 import com.grtc.main.qna.complain.ComplainEntity;
+import com.grtc.main.qna.complain.ComplainNoGenerator;
 import com.grtc.main.qna.complain.ComplainRepository;
 import com.grtc.main.qna.complain.ComplainStatus;
 import com.grtc.main.qna.complain.ComplainType;
@@ -26,8 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,9 +41,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AdminComplainService {
 
-    private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
-
     private final ComplainRepository complainRepository;
+    private final ComplainNoGenerator complainNoGenerator;
     private final AdminMemberService adminMemberService;
     private final FileService fileService;
 
@@ -66,11 +64,8 @@ public class AdminComplainService {
     public AdminComplainDto.Detail create(Long adminId, AdminComplainDto.SaveRequest request, List<MultipartFile> files) {
         LoginEntity admin = adminMemberService.getActiveAdmin(adminId);
 
-        String prefix = "CM" + LocalDate.now().format(NO_DATE) + "-";
-        long sequence = complainRepository.countByComplainNoStartingWith(prefix) + 1;
-
         ComplainEntity saved = complainRepository.save(ComplainEntity.builder()
-                .complainNo(prefix + String.format("%03d", sequence))
+                .complainNo(complainNoGenerator.next()) // 사용자 등록과 같은 번호 체계를 함께 쓴다 (중복 없이 생성)
                 .type(request.type())
                 .category(request.category() != null ? request.category() : ComplainCategory.ETC)
                 .title(request.title().trim())

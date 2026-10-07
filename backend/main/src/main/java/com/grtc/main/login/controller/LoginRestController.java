@@ -80,7 +80,8 @@ public class LoginRestController {
         return ApiResponse.ok(tokenService.reissue(refreshToken));
     }
 
-    // 로그아웃 (권한: 회원) - Refresh 토큰 기록을 지우고 쿠키도 삭제
+    // 로그아웃 (권한: 전체) - Refresh 토큰 기록을 지우고 쿠키도 삭제
+    //   Access 토큰이 만료됐거나 없어도 호출할 수 있다. (쿠키의 Refresh 토큰만 보고 처리한다)
     //   Access 토큰은 프론트에서 버린다. (서버에 저장하지 않으므로 만료될 때까지는 형식상 유효)
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(

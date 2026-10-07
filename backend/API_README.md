@@ -122,7 +122,7 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | GET | /auth/check-id | 아이디 사용 가능 여부(loginId) | 전체 |
 | POST | /auth/login | 로그인, 토큰 발급(loginId, password) | 전체 |
 | POST | /auth/reissue | Access 토큰 재발급(쿠키의 Refresh 토큰 사용) | 전체 |
-| POST | /auth/logout | 로그아웃, Refresh 토큰 삭제 | 회원 |
+| POST | /auth/logout | 로그아웃, Refresh 토큰 삭제(Access 토큰이 만료됐어도 호출 가능) | 전체 |
 | GET | /auth/me | 로그인한 회원 요약 정보(사이드바 하단, 메뉴 표시용) | 회원 |
 
 로그인 응답의 `data`:

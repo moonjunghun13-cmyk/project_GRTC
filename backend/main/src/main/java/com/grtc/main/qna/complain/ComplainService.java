@@ -23,8 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,9 +39,8 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class ComplainService {
 
-    private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
-
     private final ComplainRepository complainRepository;
+    private final ComplainNoGenerator complainNoGenerator;
     private final LoginService loginService;
     private final FileService fileService;
 
@@ -88,12 +85,8 @@ public class ComplainService {
     public ComplainDto.Detail create(Long userId, ComplainDto.SaveRequest request, List<MultipartFile> files) {
         LoginEntity me = loginService.getActiveMember(userId);
 
-        // 민원번호: CM + 오늘(yyMMdd) + - + 그날의 일련번호(3자리)
-        String prefix = "CM" + LocalDate.now().format(NO_DATE) + "-";
-        long sequence = complainRepository.countByComplainNoStartingWith(prefix) + 1;
-
         ComplainEntity saved = complainRepository.save(ComplainEntity.builder()
-                .complainNo(prefix + String.format("%03d", sequence))
+                .complainNo(complainNoGenerator.next()) // CM + 오늘(yyMMdd) + - + 그날의 일련번호 (중복 없이 생성)
                 .type(request.type())
                 .category(categoryOrDefault(request.category()))
                 .title(request.title().trim())
