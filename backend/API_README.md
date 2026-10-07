@@ -156,17 +156,31 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 `role` 은 그대로 `ADMIN` 이고, 그 안에서 유형(`adminType`)에 따라 볼 수 있는 페이지가 나뉩니다.
 
-| adminType | 이름 | 열람 가능 페이지 | 개발용 계정 |
-| --- | --- | --- | --- |
-| SYSTEM_ADMIN | 시스템 관리자 | 모든 페이지 | admin |
-| DEPARTMENT_HEAD | 부서장 | 대시보드 | depthead |
-| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리 | cmanager |
-| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리 | vmanager |
+| adminType | 이름 | 열람 가능 페이지 |
+| --- | --- | --- |
+| SYSTEM_ADMIN | 시스템 관리자 | 모든 페이지 |
+| DEPARTMENT_HEAD | 부서장 | 대시보드 |
+| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리 |
+| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리 |
+
+개발용 관리자 계정 8개 (광주교통공사 임직원 세부사항 "3. 사용자별 부서/직급 분배"):
+
+| 아이디 | 관리자 유형 | 부서 | 직급 | 열람 가능 페이지 |
+| --- | --- | --- | --- | --- |
+| admin | 시스템 관리자 | IT전략팀 | 차장 | 모든 페이지 |
+| admin2 | 시스템 관리자 | IT전략팀 | 과장 | 모든 페이지 |
+| depthead | 부서장 | 고객사업처 | 처장 | 대시보드 |
+| depthead2 | 부서장 | 차량운영처 | 처장 | 대시보드 |
+| cmanager | 민원 담당자 | 고객만족팀 | 대리 | 대시보드, 민원관리 |
+| cmanager2 | 민원 담당자 | 고객만족팀 | 주임 | 대시보드, 민원관리 |
+| vmanager | 차량 담당자 | 차량팀 | 부장 | 대시보드, 차량관리 |
+| vmanager2 | 차량 담당자 | 차량팀 | 차장 | 대시보드, 차량관리 |
 
 - 페이지와 API 의 대응: 대시보드 `/admin/dashboard`, 차량관리 `/admin/vehicles`, 배차관리 `/admin/dispatches`, 운행관리 `/admin/operations`, 민원관리 `/api/admin/complaints`, 회원관리 `/admin/members`. 배차관리·운행관리·회원관리는 시스템 관리자만 볼 수 있습니다.
 - 볼 수 없는 페이지의 API 를 호출하면 `403 FORBIDDEN` 입니다. 내 정보(`/admin/me`)는 모든 관리자가 쓸 수 있습니다.
 - 프론트는 `pages` 에 있는 메뉴만 보여주면 됩니다. 주소를 직접 쳐서 들어가도 서버가 API 를 막습니다.
-- 개발용 계정의 비밀번호는 모두 `admin1234!` 입니다. `app.seed.enabled=true` 일 때 자동으로 생성됩니다.
+- 개발용 계정의 비밀번호는 모두 `admin1234!` 입니다. `app.seed.enabled=true` 일 때 서버가 켜지면서 없는 계정만 자동으로 만듭니다. 이미 있는 계정은 비어 있는 관리자 유형·부서·직급만 채우고, 비밀번호나 직접 고친 값은 건드리지 않습니다.
+- 소속 부서·직급 선택 목록(`GET /members/options`, `GET /admin/members/options`)도 같은 문서의 값입니다. 부서: 고객사업처, 차량운영처, 고객만족팀, 차량팀, IT전략팀 / 직급: 처장, 팀장, 부장, 차장, 과장, 대리, 주임
 - 유형이 비어 있는 관리자(이 기능 전에 만들어진 계정, 회원관리에서 관리자로 올린 계정)는 시스템 관리자로 취급합니다.
 
 #### ② 회원 (Member)

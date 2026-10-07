@@ -24,8 +24,9 @@ import java.util.Locale;
 public class MemberService {
 
     // 회원정보 화면의 선택 목록 (dashboard 서버의 MemberService 와 같은 값으로 맞춘다)
-    public static final List<String> DEPARTMENTS = List.of("운영팀", "차량팀", "시설팀", "안전관리팀", "고객지원팀");
-    public static final List<String> POSITIONS = List.of("시스템 관리자", "팀장", "대리", "사원");
+    //  - 광주교통공사 임직원 세부사항의 "2. 부서"(사용자가 속한 부서), "1. 직급"(높은 순)과 같은 값이다.
+    public static final List<String> DEPARTMENTS = List.of("고객사업처", "차량운영처", "고객만족팀", "차량팀", "IT전략팀");
+    public static final List<String> POSITIONS = List.of("처장", "팀장", "부장", "차장", "과장", "대리", "주임");
 
     private final LoginRepository loginRepository;
     private final LoginService loginService;
