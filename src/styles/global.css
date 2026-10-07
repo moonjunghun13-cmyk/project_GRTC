@@ -1,5 +1,14 @@
+@font-face {
+  font-family: 'SUIT';
+  src: url('/fonts/suit/SUIT-Variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 :root {
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-family: 'SUIT', sans-serif;
+  font-family: var(--font-family);
+  font-weight: 400;
   color: #123d78;
   background: #f7fbfd;
   font-synthesis: none;
@@ -94,3 +103,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .app-sidebar nav { flex-direction: row; flex-wrap: wrap; }
   .app-content { padding: 20px; }
 }
+
+/* Shared typography: sizes and component layout remain local. */
+button, input, select, textarea, input::file-selector-button {
+  font-family: var(--font-family);
+}
+h1, h2, h3, h4, h5, h6 { font-weight: 800; }
+button, input::file-selector-button, th { font-weight: 700 !important; }
+input, select, textarea { font-weight: 400 !important; }

@@ -1,10 +1,13 @@
 <script setup>
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
+import {currentUser} from '../../stores/currentUser'
+import {API_INTEGRATION_ENABLED} from '../../api/clients'
+import {canAccessAdminPath} from '../../utils/adminAccess'
 import train from '../../assets/train3.png'
 
 const route = useRoute()
-const stations = [
+const allStations = [
   { label: '대시보드', path: '/dashboard', prefix: 'admin-dashboard' },
   { label: '차량관리', path: '/dashboard/vehicles', prefix: 'admin-vehicle' },
   { label: '배차관리', path: '/dashboard/dispatches', prefix: 'admin-dispatch' },
@@ -12,7 +15,8 @@ const stations = [
   { label: '민원관리', path: '/dashboard/complaints', prefix: 'admin-complaint' },
   { label: '회원관리', path: '/dashboard/members', prefix: 'admin-member' },
 ]
-const currentIndex = computed(() => stations.findIndex(item => String(route.name || '').startsWith(item.prefix)))
+const stations=computed(()=>allStations.filter(item=>!API_INTEGRATION_ENABLED||canAccessAdminPath(currentUser.value,item.path)))
+const currentIndex = computed(() => stations.value.findIndex(item => String(route.name || '').startsWith(item.prefix)))
 const track = ref(null)
 const position = ref(0)
 const piers = ref([])

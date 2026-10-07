@@ -73,7 +73,7 @@ onUnmounted(() => {
 
 <style scoped>
 .intro {
-  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-family);
   --scale: min(0.0520833333vw, 0.0925925926svh);
   position: relative;
   width: 100%;
@@ -121,7 +121,7 @@ onUnmounted(() => {
   display: block;
   color: #123d78;
   font-size: calc(100 * var(--scale));
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .intro-description {

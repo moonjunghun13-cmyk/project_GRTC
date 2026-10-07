@@ -1,4 +1,5 @@
 <script setup>
+import {homeRoute} from '../../composables/useHomeRoute'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { logoutCurrentUser } from '../../services/logout'
@@ -16,12 +17,12 @@ const logoutError = ref('')
 async function logout() {
   if (logoutBusy.value) return
   logoutBusy.value = true
-  try { logoutCurrentUser(); await router.replace('/') }
+  try { await logoutCurrentUser(); await router.replace('/') }
   catch (error) { logoutError.value = error.message }
   finally { logoutBusy.value = false }
 }
 </script>
-<template><header class="app-header" :class="{ 'admin-header': admin, 'header-boundary': headerBoundary, 'complaint-header': adminComplaint, 'landscape-header': admin && currentUser?.role === 'ADMIN' }"><span v-if="admin && currentUser?.role === 'ADMIN'" class="header-landscape" aria-hidden="true"><img :src="headerLandscape" alt="" /></span><RouterLink to="/"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><HeaderRouteMenu v-if="admin && currentUser?.role === 'ADMIN'" /><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button type="button" :disabled="logoutBusy" @click="logout">로그아웃</button></div></header></template>
+<template><header class="app-header" :class="{ 'admin-header': admin, 'header-boundary': headerBoundary, 'complaint-header': adminComplaint, 'landscape-header': admin && currentUser?.role === 'ADMIN' }"><span v-if="admin && currentUser?.role === 'ADMIN'" class="header-landscape" aria-hidden="true"><img :src="headerLandscape" alt="" /></span><RouterLink :to="homeRoute"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><HeaderRouteMenu v-if="admin && currentUser?.role === 'ADMIN'" /><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button type="button" :disabled="logoutBusy" @click="logout">로그아웃</button></div></header></template>
 
 <style scoped>
 .app-header.admin-header { height: 70px; min-height: 70px; flex-shrink: 0; padding: 0 28px 0 0; flex-wrap: nowrap; border-bottom: 1px solid #e9eef1; }
@@ -41,6 +42,8 @@ async function logout() {
 .header-session button:focus-visible {outline:3px solid #64b3e0;outline-offset:2px;}
 .header-session [role="alert"] { color: #c52f35; font-size: 13px; }
 </style>
+
+
 
 
 

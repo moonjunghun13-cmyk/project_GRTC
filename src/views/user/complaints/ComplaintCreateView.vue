@@ -5,12 +5,14 @@ import write from '../../../assets/write.png'
 import ComplaintEditor from '../../../components/complaints/ComplaintEditor.vue'
 import { complaintEditorConfig } from '../../../mocks/complaintForm'
 import { currentUser } from '../../../stores/currentUser'
-import { addMockComplaint } from '../../../mocks/complaints'
-import { getComplaintOptions } from '../../../services/complaintOptions'
-const {types:complaintTypes,categories}=getComplaintOptions()
+import { createComplaint, complaintOptions } from '../../../services/complaintApi'
+import {errorMessage} from '../../../api/clients'
+
+const complaintTypes=reactive([]),categories=reactive([])
 const router = useRouter()
 const route = useRoute()
 const listPath = computed(()=>route.name==='admin-complaint-create'?'/dashboard/complaints':'/complaints')
+function cancel(){router.push({name:route.name==='admin-complaint-create'?'admin-complaints':'user-complaints'})}
 const user = currentUser
 const draft = reactive({type:'',category:'',title:'',content:''})
 const errors = ref({})
@@ -25,7 +27,7 @@ function chooseFiles(event) {
  files.value.push(...valid)
  event.target.value=''
 }
-function submit() {
+async function submit() {
  if (busy.value) return
  const next={}
  if (!complaintTypes.some(item=>item.value===draft.type)) next.type='민원유형을 선택해 주세요.'
@@ -36,9 +38,10 @@ function submit() {
  errors.value=next
  if (Object.keys(next).length) return
  busy.value=true
- try { addMockComplaint(draft,user.value,files.value); void router.push(listPath.value) }
- catch(error) { fileError.value=error.message; busy.value=false }
+ try { await createComplaint(draft,files.value,route.name==='admin-complaint-create'); await router.push(listPath.value) }
+ catch(error) { fileError.value=errorMessage(error); busy.value=false }
 }
+complaintOptions(route.name==='admin-complaint-create').then(o=>{complaintTypes.splice(0,complaintTypes.length,...o.types.map(s=>({value:s.code,label:s.label})));categories.splice(0,categories.length,...o.categories.map(s=>({value:s.code,label:s.label})))}).catch(e=>fileError.value=errorMessage(e))
 </script>
 <template>
  <section class="complaint-write-page" aria-labelledby="write-title">
@@ -49,14 +52,14 @@ function submit() {
    <div class="write-row"><label for="complaint-title">제목 <span>*</span></label><div class="write-field"><input id="complaint-title" v-model="draft.title" required placeholder="제목을 입력해 주세요." :aria-invalid="!!errors.title" :aria-describedby="errors.title ? 'title-error' : undefined" /><p v-if="errors.title" id="title-error" class="write-error">{{ errors.title }}</p></div></div>
    <div class="write-row write-content-row"><label id="content-label">내용 <span>*</span></label><div class="write-field write-content-field"><ComplaintEditor :max-length="complaintEditorConfig.maxLength" :error="errors.content" @update="draft.content=$event.text" /><p id="complaint-content-error" class="write-error" v-if="errors.content">{{ errors.content }}</p></div></div>
    <div class="write-row"><label for="complaint-files">첨부파일</label><div class="write-field"><div class="write-file-controls"><button type="button" class="write-file-button" @click="fileInput.click()">파일 선택</button><input id="complaint-files" ref="fileInput" class="write-file-input" type="file" accept="image/*,application/pdf" multiple @change="chooseFiles" /><span>이미지 또는 PDF 파일을 첨부할 수 있습니다.</span></div><ul v-if="files.length" class="write-files"><li v-for="(file,index) in files" :key="index"><span>{{ file.name }}</span><button type="button" :aria-label="file.name + ' 제거'" @click="files.splice(index,1)">×</button></li></ul><p v-if="fileError" class="write-error" role="alert">{{ fileError }}</p></div></div>
-   <div class="write-actions"><button type="button" class="write-cancel" @click="router.push(listPath.value)">취소</button><button type="submit" class="write-submit" :disabled="busy">등록하기</button></div>
+   <div class="write-actions"><button type="button" class="write-cancel" @click="cancel">취소</button><button type="submit" class="write-submit" :disabled="busy">등록하기</button></div>
   </form>
  </section>
 </template>
 <style scoped>
 .complaint-write-page { min-height: 100%; display: flex; flex-direction: column; color: #064b76; }
 .write-heading { position: relative; display: flex; align-items: flex-end; justify-content: space-between; flex-shrink: 0; min-height: 165px; padding-bottom: 18px; margin-bottom: 20px; gap: 20px; }
-.write-heading h1 { font-size: 34px; font-weight: 900; margin: 0 0 8px; }
+.write-heading h1 { font-size: 34px; font-weight: 800; margin: 0 0 8px; }
 .write-decoration { width: 400px; max-width: 55%; display: flex; flex-direction: column; align-items: center; }
 .write-decoration img { display: block; width: 100%; height: auto; }
 .write-bubble { position: relative; padding: 8px 18px; margin-bottom: 10px; border: 1px solid #acd8ed; border-radius: 16px; background: white; font-size: 16px; font-weight: 700; white-space: nowrap; }
@@ -92,4 +95,6 @@ function submit() {
 @media (max-width:1000px) { .complaint-write-page { min-height: auto; } .write-first-row { grid-template-columns: 1fr; gap: 16px; } .write-content-row { min-height: 280px; } .write-heading { min-height: 150px; } .write-decoration { width: 300px; } .write-row { grid-template-columns: 90px minmax(0,1fr); gap: 12px; } }
 @media (max-width:650px) { .write-row { grid-template-columns: 1fr; gap: 6px; } .write-row > label { padding-top: 0; } .write-heading h1 { font-size: 30px; } .write-decoration { max-width: 60%; } .write-bubble { font-size: 12px; padding: 6px 8px; } }
 </style>
+
+
 

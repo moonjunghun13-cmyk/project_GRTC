@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
+import {API_INTEGRATION_ENABLED} from '../../api/clients'
+import {canAccessAdminPath} from '../../utils/adminAccess'
 import { currentUser } from '../../stores/currentUser'
 import { useRoute } from 'vue-router'
 import SidebarProfile from './SidebarProfile.vue'
@@ -19,7 +21,7 @@ const menus = [
 const complaintPage = computed(() => /^\/(?:dashboard\/complaints|admin\/complaints|complaints|user\/complaints)(?:\/|$)/.test(route.path))
 const identity = computed(()=>props.user || currentUser.value)
 const accountRole = computed(()=>identity.value?.role === 'ADMIN' ? 'admin' : 'user')
-const visibleMenus = computed(() => accountRole.value === 'admin' ? menus : [{ label: '민원관리', path: '/complaints' }])
+const visibleMenus = computed(() => accountRole.value === 'admin' ? menus.filter(menu=>!API_INTEGRATION_ENABLED||canAccessAdminPath(identity.value,menu.path)) : [{ label: '민원관리', path: '/complaints' }])
 const currentPath = computed(() => route.path.replace(/^\/admin(?=\/|$)/, '/dashboard').replace(/^\/user\/complaints(?=\/|$)/, '/complaints'))
 const active = path => accountRole.value === 'user' && route.name === 'forbidden' ? path === '/complaints' : path === '/dashboard' ? currentPath.value === path : currentPath.value === path || currentPath.value.startsWith(path + '/')
 const clickedPath = ref(null)
@@ -38,7 +40,7 @@ function finishEffect(event, path, sequence) {
 }</script>
 <template>
   <aside class="admin-sidebar" :class="{ 'complaint-sidebar': accountRole === 'user' || complaintPage }">
-    <nav class="admin-menu" :aria-label="accountRole === 'admin' ? '관리자 메뉴' : '사용자 메뉴'"><RouterLink v-for="menu in visibleMenus" :key="menu.path" :to="menu.path" custom v-slot="{ href, navigate }"><a :href="href" @click="selectMenu($event, navigate, menu.path)" :class="{ selected: active(menu.path), 'menu-clicked': clickedPath === menu.path }" :aria-current="active(menu.path) ? 'page' : undefined"><span :key="clickedPath === menu.path ? effectSequence : 0" class="menu-background" aria-hidden="true"></span><span class="menu-label">{{ menu.label }}</span><span v-if="clickedPath === menu.path" :key="effectSequence" class="menu-train-layer" aria-hidden="true"><span class="menu-train-motion" @animationend="finishEffect($event, menu.path, effectSequence)"><img :src="menuTrain" alt="" /></span></span></a></RouterLink></nav>
+    <nav class="admin-menu" :aria-label="accountRole === 'admin' ? '관리자 메뉴' : '사용자 메뉴'"><RouterLink v-for="menu in visibleMenus" :key="menu.path" :to="menu.path" custom v-slot="{ href, navigate }"><a :href="href" @click="selectMenu($event, navigate, menu.path)" :class="{ selected: active(menu.path), 'menu-clicked': clickedPath === menu.path }" :aria-current="active(menu.path) ? 'page' : undefined"><span :key="'background-'+menu.path+'-'+(clickedPath === menu.path ? effectSequence : 0)" class="menu-background" aria-hidden="true"></span><span class="menu-label">{{ menu.label }}</span><span v-if="clickedPath === menu.path" :key="'train-'+menu.path+'-'+effectSequence" class="menu-train-layer" aria-hidden="true"><span class="menu-train-motion" @animationend="finishEffect($event, menu.path, effectSequence)"><img :src="menuTrain" alt="" /></span></span></a></RouterLink></nav>
     <div class="admin-sidebar-bottom"><img class="admin-character" :src="accountRole === 'user' || complaintPage ? complaintCharacter : character" alt="광주교통공사 캐릭터" /><SidebarProfile admin :role="accountRole" :label="accountRole === 'admin' ? '관리자' : '사용자'" :user="identity" /></div>
   </aside>
 
@@ -50,7 +52,7 @@ function finishEffect(event, path, sequence) {
 .admin-menu a { position: relative; display: flex; align-items: center; justify-content: center; min-height: 54px; margin-right: 30px; color: #5b6063; font-size: 22px; font-weight: 700; text-decoration: none; border-radius: 0 12px 12px 0; transition: background-color 180ms ease-out, color 180ms ease-out, transform 180ms ease-out; }
 .admin-menu a::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: #0078ae; opacity: 0; transition: opacity 200ms ease-out; }
 .admin-menu a:not(.selected):hover { background: #f0f2f4; transform: scale(1.015); }
-.admin-menu a.selected { color: #064b76; }
+.admin-menu a.selected { color: #064b76; font-weight: 800; }
 .menu-background::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 25%, rgb(255 255 255 / 45%) 50%, transparent 75%); transform: translateX(-100%); opacity: 0; }
 .menu-clicked .menu-background::after { animation: menu-shine 550ms ease-out; }
 @keyframes menu-shine { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }

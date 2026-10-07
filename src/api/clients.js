@@ -1,25 +1,17 @@
 import axios from 'axios'
-export const API_INTEGRATION_ENABLED = import.meta.env?.VITE_ENABLE_API === 'true'
-export const mainApi = axios.create({ baseURL: import.meta.env?.VITE_MAIN_API_URL || 'http://localhost:8081', withCredentials: true, timeout: 10000 })
-export const dashboardApi = axios.create({ baseURL: import.meta.env?.VITE_DASHBOARD_API_URL || 'http://localhost:8082', withCredentials: true, timeout: 10000 })
-for (const api of [mainApi, dashboardApi]) api.interceptors.request.use(config => {
-  if (!API_INTEGRATION_ENABLED) throw new Error('현재는 화면 제작 단계입니다. API 연동은 비활성화되어 있습니다.')
-  return config
-})
-export function errorMessage(error) {
-  if (error.response?.data?.message) return error.response.data.message
-  if (error.code === 'ERR_NETWORK') return '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.'
-  if (error.code === 'ECONNABORTED') return '서버 응답이 지연되고 있습니다. 다시 시도해 주세요.'
-  return error.message || '요청을 처리할 수 없습니다.'
+export const API_INTEGRATION_ENABLED=import.meta.env.VITE_ENABLE_API==='true'
+export const mainApi=axios.create({baseURL:import.meta.env.VITE_MAIN_API_URL||'http://localhost:8081',withCredentials:true,timeout:15000})
+export const dashboardApi=axios.create({baseURL:import.meta.env.VITE_DASHBOARD_API_URL||'http://localhost:8081',withCredentials:true,timeout:15000})
+let token=null,pending=null
+export function setAccessToken(value){token=value}
+export function clearAccessToken(){token=null}
+export function refreshAccessToken(){if(!pending)pending=axios.post(mainApi.defaults.baseURL+'/api/v1/auth/reissue',{}, {withCredentials:true,timeout:15000}).then(r=>{token=r.data.data.accessToken;return token}).finally(()=>pending=null);return pending}
+export function errorMessage(e){return e.response?.data?.error?.message||e.response?.data?.message||e.message||'요청에 실패했습니다.'}
+export function authError(e){return e.response?.status===401?'unauthorized':e.response?.status===403?'forbidden':null}
+let failure=()=>{}
+export function installApiErrorHandlers(handler){failure=handler}
+for(const api of [mainApi,dashboardApi]){
+ api.interceptors.request.use(c=>{if(!API_INTEGRATION_ENABLED)throw new Error('API 연결 비활성화');if(token)c.headers.Authorization='Bearer '+token;return c})
+ api.interceptors.response.use(r=>r,async e=>{const c=e.config;const publicAuth=/\/auth\/(login|signup|check-id)/.test(c?.url||'');if(e.response?.status===401&&c&&!c._retried&&!publicAuth){c._retried=true;try{await refreshAccessToken();return api(c)}catch{token=null}}if(!c?.localAuthError)failure(authError(e),e);throw e})
 }
-export function authError(error) {
-  if (error.response?.status === 401 || error.response?.data?.code === 'A002') return 'unauthorized'
-  if (error.response?.status === 403 || error.response?.data?.code === 'A001') return 'forbidden'
-  return null
-}
-export function installApiErrorHandlers(handler) {
-  for (const api of [mainApi, dashboardApi]) api.interceptors.response.use(response => response, error => {
-    if (!error.config?.localAuthError) handler(authError(error), error)
-    return Promise.reject(error)
-  })
-}
+export async function general(method,url,data,params){return (await mainApi.request({method,url,data,params})).data.data}

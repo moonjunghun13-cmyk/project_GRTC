@@ -1,4 +1,5 @@
 <script setup>
+import {homeRoute} from '../composables/useHomeRoute'
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
@@ -12,14 +13,14 @@ import logoImage from '../assets/logo.png'
       <img :src="loginImage" alt="노을 진 광주 도심을 달리는 열차와 광주교통공사 캐릭터" />
     </aside>
     <main class="authentication-main" :class="{ 'is-signup': route.name === 'signup' }">
-      <RouterLink class="authentication-logo" to="/"><img :src="logoImage" alt="광주교통공사 인트로로 이동" /></RouterLink>
+      <RouterLink class="authentication-logo" :to="homeRoute"><img :src="logoImage" alt="광주교통공사" /></RouterLink>
       <div class="authentication-content"><RouterView /></div>
     </main>
   </div>
 </template>
 
 <style scoped>
-.authentication-layout { display: grid; grid-template-columns: 50% 50%; min-height: 100svh; background: #fff; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+.authentication-layout { display: grid; grid-template-columns: 50% 50%; min-height: 100svh; background: #fff; font-family: var(--font-family); }
 .authentication-visual { height: 100svh; position: sticky; top: 0; overflow: hidden; }
 .authentication-visual > img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: left center; }
 .authentication-main { min-width: 0; position: relative; display: flex; flex-direction: column; align-items: center; padding: 150px 0 60px; }
@@ -27,7 +28,7 @@ import logoImage from '../assets/logo.png'
 .authentication-logo img { width: 100%; height: auto; display: block; }
 .authentication-main:not(.is-signup) :deep(.authentication-screen) { width: 85%; margin: auto 0; color: #222e3b; }
 .authentication-main:not(.is-signup) :deep(.authentication-heading) { text-align: center; margin-bottom: 48px; }
-.authentication-main:not(.is-signup) :deep(h1) { margin: 0 0 18px; color: #123d78; font-size: clamp(32px, 2.5vw, 48px); font-weight: 900; }
+.authentication-main:not(.is-signup) :deep(h1) { margin: 0 0 18px; color: #123d78; font-size: clamp(32px, 2.5vw, 48px); font-weight: 800; }
 .authentication-main:not(.is-signup) :deep(.authentication-description) { margin: 0; color: #737b85; font-weight: 500; font-size: clamp(16px, 1.25vw, 24px); line-height: 1.65; }
 .authentication-main:not(.is-signup) :deep(.authentication-form) { display: flex; flex-direction: column; gap: 26px; }
 .authentication-main:not(.is-signup) :deep(.authentication-field) { display: flex; flex-direction: column; gap: 12px; }
@@ -93,7 +94,7 @@ import logoImage from '../assets/logo.png'
   color: #222e3b;
 }
 .authentication-main.is-signup :deep(.authentication-heading) { text-align: center; margin-bottom: 22px; }
-.authentication-main.is-signup :deep(h1) { margin: 0 0 8px; color: #123d78; font-size: 44px; font-weight: 900; line-height: 1.2; }
+.authentication-main.is-signup :deep(h1) { margin: 0 0 8px; color: #123d78; font-size: 44px; font-weight: 800; line-height: 1.2; }
 .authentication-main.is-signup :deep(.authentication-description) { margin: 0; color: #737b85; font-size: 17px; font-weight: 500; line-height: 1.5; }
 .authentication-main.is-signup :deep(.authentication-form) { display: flex; flex-direction: column; gap: 12px; }
 .authentication-main.is-signup :deep(.authentication-field) { display: flex; flex-direction: column; gap: 6px; }
@@ -120,4 +121,5 @@ import logoImage from '../assets/logo.png'
 
 @media (prefers-reduced-motion: reduce) { .authentication-main :deep(.authentication-submit) { transition: none; } }
 </style>
+
 

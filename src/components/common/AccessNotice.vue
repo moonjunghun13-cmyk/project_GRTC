@@ -27,7 +27,7 @@ function previous() {
 .access-copy { flex: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
 .access-copy img { width: min(660px, 85%); max-height: min(320px, 30dvh); object-fit: contain; height: auto; }
 .access-badge { padding: 7px 18px; border-radius: 20px; background: #e9f5fc; color: #087bb4; font-size: 16px; font-weight: 700; }
-.access-copy h2 { margin: 0; font-size: 38px; font-weight: 900; line-height: 1.35; }
+.access-copy h2 { margin: 0; font-size: 38px; font-weight: 800; line-height: 1.35; }
 .access-copy p { margin: 0; color: #7b858e; font-size: 20px; line-height: 1.5; }
 .access-actions { display: flex; justify-content: flex-end; margin-top: 0; }
 .access-actions button { min-height: 48px; padding: 0 28px; border: 0; border-radius: 10px; background: #086b9f; color: white; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; transition: background-color 200ms ease-out; }
