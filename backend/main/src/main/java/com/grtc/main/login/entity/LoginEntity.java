@@ -53,6 +53,13 @@ public class LoginEntity {
     @Builder.Default
     private Role role = Role.USER; // 회원 권한(기본값 USER, 문자열로 저장)
 
+    // 관리자 유형(시스템 관리자 / 부서장 / 민원 담당자 / 차량 담당자). 유형마다 볼 수 있는 관리자 페이지가 다르다.
+    //  - 일반회원은 null
+    //  - 관리자인데 null 이면 시스템 관리자로 본다. (이 칸이 생기기 전에 만들어진 관리자 계정)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "admin_type", length = 30)
+    private AdminType adminType;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -89,8 +96,25 @@ public class LoginEntity {
         this.profileThumbnail = profileThumbnail;
     }
 
+    // 권한 변경. 일반회원이 되면 관리자 유형은 지운다.
+    //  (회원관리에서 관리자로 올린 계정은 유형이 비어 있으므로 시스템 관리자로 취급된다)
     public void changeRole(Role role) {
         this.role = role;
+        if (role != Role.ADMIN) {
+            this.adminType = null;
+        }
+    }
+
+    public void changeAdminType(AdminType adminType) {
+        this.adminType = adminType;
+    }
+
+    // 실제로 적용되는 관리자 유형: 관리자가 아니면 null, 관리자인데 유형이 비어 있으면 시스템 관리자
+    public AdminType resolveAdminType() {
+        if (role != Role.ADMIN) {
+            return null;
+        }
+        return adminType != null ? adminType : AdminType.SYSTEM_ADMIN;
     }
 
     public void changeStatus(MemberStatus status) {

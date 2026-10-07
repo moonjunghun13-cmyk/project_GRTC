@@ -31,6 +31,9 @@ public enum ErrorCode {
             "UNAUTHORIZED", "로그인 정보가 만료되었습니다. 다시 로그인해주세요."),
     ADMIN_ONLY(HttpStatus.FORBIDDEN,
             "FORBIDDEN", "관리자 페이지이므로 열람이 불가합니다."),
+    // 관리자이지만 자기 유형(부서장, 민원 담당자, 차량 담당자)으로는 볼 수 없는 페이지
+    ADMIN_PAGE_FORBIDDEN(HttpStatus.FORBIDDEN,
+            "FORBIDDEN", "이 페이지를 열람할 권한이 없습니다."),
 
     // ---------- 로그인 / 회원 ----------
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT,

@@ -33,4 +33,14 @@ public class AdminMemberService {
         }
         return member;
     }
+
+    // 위 확인에 더해, 이 관리자의 유형으로 해당 관리자 API(= 그 페이지)를 쓸 수 있는지도 확인한다.
+    //  - 예) 민원 담당자가 차량관리 API 를 호출하면 403
+    public LoginEntity getActiveAdminFor(Long id, String requestUri) {
+        LoginEntity member = getActiveAdmin(id);
+        if (!member.resolveAdminType().canCallApi(requestUri)) {
+            throw new BusinessException(ErrorCode.ADMIN_PAGE_FORBIDDEN);
+        }
+        return member;
+    }
 }

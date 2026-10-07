@@ -91,7 +91,7 @@
 | 401 | UNAUTHORIZED | 인증 정보 없음(토큰 없음·잘못됨, Refresh 토큰 만료) |
 | 401 | TOKEN_EXPIRED | Access 토큰 만료(재발급 필요) |
 | 401 | LOGIN_FAILED | 아이디 또는 비밀번호 불일치 |
-| 403 | FORBIDDEN | 권한 없음 |
+| 403 | FORBIDDEN | 권한 없음(관리자가 아님, 또는 관리자 유형으로 볼 수 없는 페이지) |
 | 403 | ACCOUNT_SUSPENDED | 이용이 정지된 계정 |
 | 403 | ACCOUNT_WITHDRAWN | 탈퇴한 계정 |
 | 403 | COMPLAIN_NOT_OWNER | 본인이 작성하지 않은 민원 수정·삭제 시도 |
@@ -138,13 +138,36 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
     "name": "관리자",
     "role": "ADMIN",
     "roleLabel": "관리자",
-    "redirectPath": "/dashboard"
+    "redirectPath": "/dashboard",
+    "adminType": "COMPLAINT_MANAGER",
+    "adminTypeLabel": "민원 담당자",
+    "pages": [
+      { "code": "DASHBOARD", "label": "대시보드", "path": "/dashboard" },
+      { "code": "COMPLAINTS", "label": "민원관리", "path": "/dashboard/complaints" }
+    ]
   }
 }
 ```
 
 - `redirectPath` 는 로그인 직후 이동할 화면입니다. 관리자는 `/dashboard`, 일반회원은 `/complaints` 입니다.
-- 개발용 관리자 계정은 `admin` / `admin1234!` 입니다. `app.seed.enabled=true` 일 때 자동으로 생성됩니다.
+- `adminType`, `adminTypeLabel`, `pages` 는 관리자 유형과 그 유형이 볼 수 있는 페이지입니다. `GET /auth/me` 에도 똑같이 내려갑니다. 일반회원은 `adminType`·`adminTypeLabel` 이 `null`, `pages` 가 빈 배열입니다.
+
+**관리자 유형별 열람 가능 페이지**
+
+`role` 은 그대로 `ADMIN` 이고, 그 안에서 유형(`adminType`)에 따라 볼 수 있는 페이지가 나뉩니다.
+
+| adminType | 이름 | 열람 가능 페이지 | 개발용 계정 |
+| --- | --- | --- | --- |
+| SYSTEM_ADMIN | 시스템 관리자 | 모든 페이지 | admin |
+| DEPARTMENT_HEAD | 부서장 | 대시보드 | depthead |
+| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리 | cmanager |
+| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리 | vmanager |
+
+- 페이지와 API 의 대응: 대시보드 `/admin/dashboard`, 차량관리 `/admin/vehicles`, 배차관리 `/admin/dispatches`, 운행관리 `/admin/operations`, 민원관리 `/api/admin/complaints`, 회원관리 `/admin/members`. 배차관리·운행관리·회원관리는 시스템 관리자만 볼 수 있습니다.
+- 볼 수 없는 페이지의 API 를 호출하면 `403 FORBIDDEN` 입니다. 내 정보(`/admin/me`)는 모든 관리자가 쓸 수 있습니다.
+- 프론트는 `pages` 에 있는 메뉴만 보여주면 됩니다. 주소를 직접 쳐서 들어가도 서버가 API 를 막습니다.
+- 개발용 계정의 비밀번호는 모두 `admin1234!` 입니다. `app.seed.enabled=true` 일 때 자동으로 생성됩니다.
+- 유형이 비어 있는 관리자(이 기능 전에 만들어진 계정, 회원관리에서 관리자로 올린 계정)는 시스템 관리자로 취급합니다.
 
 #### ② 회원 (Member)
 
