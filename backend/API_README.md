@@ -241,7 +241,8 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | GET | /admin/dispatches/{dispatchId} | 배차 상세 | 관리자 |
 | POST | /admin/dispatches | 배차 등록(차량 상태·시간 중복 검증 후 저장) | 관리자 |
 | PATCH | /admin/dispatches/{dispatchId} | 배차 수정(차량·날짜·시각이 바뀌면 status → CHANGED) | 관리자 |
-| PATCH | /admin/dispatches/{dispatchId}/cancel | 배차 취소(status → CANCELLED) | 관리자 |
+| PATCH | /admin/dispatches/{dispatchId}/cancel | 배차 취소(status → CANCELLED). 기록은 남는다 | 관리자 |
+| DELETE | /admin/dispatches/{dispatchId} | 배차 삭제(기록 자체를 지움, 상태와 상관없이 가능, 되돌릴 수 없음). 없는 배차면 404 | 관리자 |
 
 - 등록 본문: dispatchDate, vehicleId, driverName, departureTime, arrivalTime, remark
 - 상태(status): COMPLETED(배차 완료), WAITING(배차 대기), CHANGED(배차 변경), CANCELLED(배차 취소)

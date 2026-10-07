@@ -20,12 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-// 배차관리(조회/검색/등록/수정/취소) 비즈니스 로직
+// 배차관리(조회/검색/등록/수정/취소/삭제) 비즈니스 로직
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,9 +36,8 @@ public class DispatchService {
     public static final Set<String> SORTABLE = Set.of(
             "id", "dispatchNo", "dispatchDate", "driverName", "departureTime", "arrivalTime", "status", "createdAt");
 
-    private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
-
     private final DispatchRepository dispatchRepository;
+    private final DispatchNoGenerator dispatchNoGenerator;
     private final VehicleRepository vehicleRepository;
 
     // 배차 목록: 검색어(배차번호/차량번호/운전자명) + 배차일자/차량/운전자/상태 필터 + 페이징
@@ -75,9 +73,8 @@ public class DispatchService {
         checkOverlap(vehicle.getId(), request.dispatchDate(),
                 request.departureTime(), request.arrivalTime(), -1L);
 
-        // 배차번호: DISP + 배차일(yyMMdd) + - + 그날의 일련번호(3자리)
-        long sequence = dispatchRepository.countByDispatchDate(request.dispatchDate()) + 1;
-        String dispatchNo = "DISP" + request.dispatchDate().format(NO_DATE) + "-" + String.format("%03d", sequence);
+        // 배차번호: DISP + 배차일(yyMMdd) + - + 그날의 일련번호 (삭제로 번호가 비어 있어도 겹치지 않게 생성)
+        String dispatchNo = dispatchNoGenerator.next(request.dispatchDate());
 
         DispatchEntity saved = dispatchRepository.save(DispatchEntity.builder()
                 .dispatchNo(dispatchNo)
@@ -141,6 +138,17 @@ public class DispatchService {
         dispatch.cancel();
         log.info("[dispatch] 취소 id={}", id);
         return DispatchDto.Response.from(dispatch);
+    }
+
+    // 배차 삭제 (기록 자체를 지운다. 되돌릴 수 없다)
+    //  - 기록을 남겨야 하면 삭제 대신 취소(cancel)를 쓴다. 취소된 배차는 목록과 요약 카드에 '배차 취소'로 남는다.
+    //  - 상태와 상관없이 삭제할 수 있다. 삭제한 배차의 시간대에는 같은 차량을 다시 배차할 수 있다.
+    //  - 삭제한 배차번호는 다시 쓰지 않는 것이 원칙이다. (다만 그날의 마지막 번호를 지우면 다음 등록이 그 번호를 받는다)
+    @Transactional
+    public void delete(Long id) {
+        DispatchEntity dispatch = find(id);
+        dispatchRepository.delete(dispatch);
+        log.info("[dispatch] 삭제 id={} dispatchNo={}", id, dispatch.getDispatchNo());
     }
 
     // 검색 필터/등록 폼의 차량·운전자 선택 목록

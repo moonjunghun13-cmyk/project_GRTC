@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -86,5 +87,12 @@ public class DispatchController {
     @PatchMapping("/{dispatchId}/cancel")
     public ApiResponse<DispatchDto.Response> cancel(@PathVariable Long dispatchId) {
         return ApiResponse.ok(dispatchService.cancel(dispatchId));
+    }
+
+    // 배차 삭제 (기록 자체를 지운다. 기록을 남기려면 위의 취소를 쓴다)
+    @DeleteMapping("/{dispatchId}")
+    public ApiResponse<Void> delete(@PathVariable Long dispatchId) {
+        dispatchService.delete(dispatchId);
+        return ApiResponse.ok();
     }
 }
