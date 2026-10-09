@@ -1,0 +1,11 @@
+.management-shell { --sidebar-width: 265px; height: 100svh; display: flex; flex-direction: column; font-family: var(--font-family); }
+.management-shell .app-body { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+.management-shell .app-content { min-width: 0; overflow: auto; padding: 32px; background: #fff; }
+@media (max-width: 600px) { .management-shell { --sidebar-width: 220px; } .management-shell .app-content { padding: 16px; } }
+
+.management-shell .app-content.complaint-content-shell { padding: 0; }
+.complaint-page-body { padding: 32px; }
+@media (max-width: 600px) { .complaint-page-body { padding: 16px; } }
+
+.management-shell .list-page-body {padding:20px 32px;}
+@media(min-width:1101px) and (max-height:850px){.management-shell .list-page-body{padding:12px 24px;}}

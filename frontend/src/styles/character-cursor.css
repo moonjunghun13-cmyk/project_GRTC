@@ -1,0 +1,18 @@
+html.character-cursor {
+  --character-cursor: var(--character-cursor-normal);
+}
+html.character-cursor.character-cursor-pressed {
+  --character-cursor: var(--character-cursor-down);
+}
+html.character-cursor,
+html.character-cursor * {
+  cursor: var(--character-cursor) !important;
+}
+html.character-cursor :is(textarea, input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="url"], input[type="number"], [role="textbox"], [contenteditable]:not([contenteditable="false"])),
+html.character-cursor [contenteditable]:not([contenteditable="false"]) * {
+  cursor: text !important;
+}
+html.character-cursor :is(:disabled, [aria-disabled="true"]),
+html.character-cursor :is(:disabled, [aria-disabled="true"]) * {
+  cursor: not-allowed !important;
+}

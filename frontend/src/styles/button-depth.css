@@ -1,0 +1,35 @@
+/* Shared button depth: dimensions, colors and entry animations stay in their own components. */
+:is(button:not(.text-button):not(.clear-date):not(.detail-button), a.register-button, a.member-save, a.intro-login) {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 25%), 0 2px 0 rgb(23 61 88 / 15%), 0 4px 9px rgb(23 61 88 / 10%) !important;
+  transition-property: background-color, border-color, color, box-shadow, translate;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+@media (hover: hover) {
+  :is(button:not(.text-button):not(.clear-date):not(.detail-button), a.register-button, a.member-save, a.intro-login):not(:disabled):not([aria-disabled="true"]):hover {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%), 0 3px 0 rgb(23 61 88 / 16%), 0 7px 13px rgb(23 61 88 / 14%) !important;
+    translate: 0 -1px;
+  }
+}
+:is(button:not(.text-button):not(.clear-date):not(.detail-button), a.register-button, a.member-save, a.intro-login):not(:disabled):not([aria-disabled="true"]):active {
+  box-shadow: inset 0 2px 3px rgb(23 61 88 / 12%), 0 1px 2px rgb(23 61 88 / 8%) !important;
+  translate: 0 1px;
+}
+:is(button, a.register-button, a.member-save):focus-visible {
+  outline: 3px solid #64b3e0;
+  outline-offset: 3px;
+}
+button:disabled, [aria-disabled="true"] {
+  box-shadow: none !important;
+  translate: none !important;
+}
+.write-toolbar button, .write-files button {
+  box-shadow: none !important;
+  translate: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(button, a.register-button, a.member-save, a.intro-login) {
+    translate: none !important;
+    transition-duration: 0ms;
+  }
+}
