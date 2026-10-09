@@ -52,6 +52,9 @@ public class SecurityConfig {
                         // 권한 "전체": 로그인 전에 호출하는 API
                         .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login",
                                 "/api/v1/auth/reissue", "/api/v1/auth/check-id").permitAll()
+                        // 로그아웃은 Access 토큰이 만료된 뒤에도 되어야 한다. (쿠키의 Refresh 토큰만으로 처리)
+                        //  - 여기서 401 로 막으면 Refresh 토큰이 지워지지 않아, 로그아웃한 뒤에도 재발급으로 다시 로그인된다.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
                         // 프로필 이미지는 <img src> 로 불러오므로 토큰 없이 조회 가능 (파일명은 추측할 수 없는 임의 값)
                         .requestMatchers(HttpMethod.GET, "/api/v1/files/profile/**").permitAll()
                         .requestMatchers("/error").permitAll()

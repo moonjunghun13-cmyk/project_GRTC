@@ -22,6 +22,8 @@ public final class AdminComplainDto {
 
     // 민원 등록 / 수정 요청 (파일이 같이 오므로 multipart/form-data 의 일반 필드로 받는다)
     //  - category: 비워 두면 '기타'
+    //  - contentHtml: 서식(굵게, 목록, 링크)이 들어간 내용(선택). 서버가 허용 태그만 남겨 저장한다.
+    //                 content(일반 텍스트)는 검색·글자 수 기준이라 그대로 필수다.
     //  - deleteFileIds: 수정할 때 지울 기존 첨부파일 번호들
     public record SaveRequest(
             @NotNull(message = "필수 선택 항목입니다.")
@@ -36,6 +38,9 @@ public final class AdminComplainDto {
             @NotBlank(message = "필수 입력란입니다.")
             @Size(max = 5000, message = "내용은 최대 5,000자까지 입력 가능합니다.")
             String content,
+
+            @Size(max = 20000, message = "서식이 포함된 내용이 너무 깁니다.")
+            String contentHtml,
 
             List<Long> deleteFileIds
     ) {
@@ -75,9 +80,10 @@ public final class AdminComplainDto {
             String title,
             String writerName,
             ComplainStatus status,
-            String statusLabel,       // 접수대기 / 답변중 / 답변완료 / 이관안내
-            String progressLabel,     // 미처리 / 처리중 / 처리완료 (목록 화면 표시용)
-            boolean mine              // 보는 사람이 쓴 민원인지 (false 면 상세보기가 열리지 않으므로 버튼 비활성화용)
+            String statusLabel,       // 접수대기 / 답변중 / 답변완료 / 이관안내 / 철회
+            String progressLabel,     // 미처리 / 처리중 / 처리완료 / 철회 (목록 화면 표시용)
+            boolean mine,             // 보는 사람이 쓴 민원인지 (false 면 상세보기가 열리지 않으므로 버튼 비활성화용)
+            LocalDateTime withdrawnAt // 민원인이 철회한 시각 (철회 전이면 null)
     ) {
         // maskOthers=true 이면(일반 사용자 목록) 남의 민원은 민원인 이름만 가려서 내려준다. (제목은 그대로)
         public static ListItem from(ComplainEntity c, Long viewerId, boolean maskOthers) {
@@ -96,7 +102,8 @@ public final class AdminComplainDto {
                     c.getStatus(),
                     c.getStatus().getLabel(),
                     c.getStatus().getProgressLabel(),
-                    mine
+                    mine,
+                    c.getWithdrawnAt()
             );
         }
 
@@ -150,6 +157,7 @@ public final class AdminComplainDto {
             String categoryLabel,
             String title,
             String content,
+            String contentHtml,   // 서식이 들어간 내용(허용 태그만 남긴 HTML). 없으면 null -> content 를 그대로 보여준다
             Long writerId,
             String writerName,
             ComplainStatus status,
@@ -159,7 +167,8 @@ public final class AdminComplainDto {
             LocalDateTime updatedAt,
             List<AttachmentInfo> attachments,
             AnswerInfo answer,
-            boolean editable
+            boolean editable,
+            LocalDateTime withdrawnAt   // 민원인이 철회한 시각 (철회 전이면 null). 철회된 민원은 답변할 수 없다
     ) {
     }
 

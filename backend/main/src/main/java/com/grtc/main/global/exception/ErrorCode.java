@@ -31,6 +31,9 @@ public enum ErrorCode {
             "UNAUTHORIZED", "로그인 정보가 만료되었습니다. 다시 로그인해주세요."),
     ADMIN_ONLY(HttpStatus.FORBIDDEN,
             "FORBIDDEN", "관리자 페이지이므로 열람이 불가합니다."),
+    // 관리자이지만 자기 유형(부서장, 민원 담당자, 차량 담당자)으로는 볼 수 없는 페이지
+    ADMIN_PAGE_FORBIDDEN(HttpStatus.FORBIDDEN,
+            "FORBIDDEN", "이 페이지를 열람할 권한이 없습니다."),
 
     // ---------- 로그인 / 회원 ----------
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT,
@@ -87,6 +90,8 @@ public enum ErrorCode {
             "INVALID_ANSWER_STATUS", "답변 처리상태는 답변중, 답변완료, 이관안내 중에서 선택해주세요."),
     COMPLAIN_NOT_OWNER(HttpStatus.FORBIDDEN,
             "COMPLAIN_NOT_OWNER", "본인이 작성한 민원만 수정하거나 삭제할 수 있습니다."),
+    COMPLAIN_WITHDRAWN(HttpStatus.CONFLICT,
+            "COMPLAIN_WITHDRAWN", "민원인이 철회한 민원에는 답변할 수 없습니다."),
 
     // ---------- 첨부파일 ----------
     FILE_TOO_MANY(HttpStatus.BAD_REQUEST,

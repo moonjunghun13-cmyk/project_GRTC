@@ -134,6 +134,14 @@ public class DispatchService {
         return DispatchDto.Response.from(dispatch);
     }
 
+    // 배차 삭제: 존재 여부를 확인하고 해당 기록만 삭제한다.
+    @Transactional
+    public void delete(Long id) {
+        DispatchEntity dispatch = find(id);
+        dispatchRepository.delete(dispatch);
+        log.info("[dispatch] 삭제 id={}", id);
+    }
+
     // 배차 취소 (기록은 남기고 상태만 '배차 취소'로 바꾼다)
     @Transactional
     public DispatchDto.Response cancel(Long id) {

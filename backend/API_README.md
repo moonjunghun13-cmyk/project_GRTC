@@ -91,7 +91,7 @@
 | 401 | UNAUTHORIZED | 인증 정보 없음(토큰 없음·잘못됨, Refresh 토큰 만료) |
 | 401 | TOKEN_EXPIRED | Access 토큰 만료(재발급 필요) |
 | 401 | LOGIN_FAILED | 아이디 또는 비밀번호 불일치 |
-| 403 | FORBIDDEN | 권한 없음 |
+| 403 | FORBIDDEN | 권한 없음(관리자가 아님, 또는 관리자 유형으로 볼 수 없는 페이지) |
 | 403 | ACCOUNT_SUSPENDED | 이용이 정지된 계정 |
 | 403 | ACCOUNT_WITHDRAWN | 탈퇴한 계정 |
 | 403 | COMPLAIN_NOT_OWNER | 본인이 작성하지 않은 민원 수정·삭제 시도 |
@@ -99,11 +99,13 @@
 | 405 | METHOD_NOT_ALLOWED | 허용되지 않은 요청 방식 |
 | 409 | DUPLICATE_LOGIN_ID | 이미 사용 중인 아이디 |
 | 409 | DUPLICATE_EMAIL | 이미 가입된 이메일 |
+| 409 | DUPLICATE_ACCOUNT | 같은 아이디·이메일로 동시에 가입 요청이 들어옴(다시 시도) |
 | 409 | DUPLICATE_VEHICLE_NO | 이미 등록된 차량번호 |
 | 409 | VEHICLE_IN_USE | 배차·운행 이력이 있는 차량 삭제 시도 |
 | 409 | SCHEDULE_CONFLICT | 편성 시간 중복 배정 |
 | 409 | TRAINSET_NOT_AVAILABLE | 정비·운행정지 편성 배차 시도 |
 | 409 | COMPLAIN_NOT_MODIFIABLE | 접수대기가 아닌 민원 수정·삭제 시도 |
+| 409 | COMPLAIN_WITHDRAWN | 민원인이 철회한 민원에 답변 등록 시도 |
 | 413 | FILE_TOO_LARGE | 파일 크기 초과(파일당 10MB) |
 | 415 | UNSUPPORTED_FILE_TYPE | 허용되지 않는 파일 형식 |
 | 500 | INTERNAL_ERROR | 서버 오류 |
@@ -116,11 +118,11 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 | Method | URI | 설명 | 권한 |
 | --- | --- | --- | --- |
-| POST | /auth/signup | 회원가입(name, loginId, password, passwordConfirm, over14) | 전체 |
+| POST | /auth/signup | 회원가입(name, loginId, email, password, passwordConfirm, over14) | 전체 |
 | GET | /auth/check-id | 아이디 사용 가능 여부(loginId) | 전체 |
 | POST | /auth/login | 로그인, 토큰 발급(loginId, password) | 전체 |
 | POST | /auth/reissue | Access 토큰 재발급(쿠키의 Refresh 토큰 사용) | 전체 |
-| POST | /auth/logout | 로그아웃, Refresh 토큰 삭제 | 회원 |
+| POST | /auth/logout | 로그아웃, Refresh 토큰 삭제(Access 토큰이 만료됐어도 호출 가능) | 전체 |
 | GET | /auth/me | 로그인한 회원 요약 정보(사이드바 하단, 메뉴 표시용) | 회원 |
 
 로그인 응답의 `data`:
@@ -136,13 +138,50 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
     "name": "관리자",
     "role": "ADMIN",
     "roleLabel": "관리자",
-    "redirectPath": "/dashboard"
+    "redirectPath": "/dashboard",
+    "adminType": "COMPLAINT_MANAGER",
+    "adminTypeLabel": "민원 담당자",
+    "pages": [
+      { "code": "DASHBOARD", "label": "대시보드", "path": "/dashboard" },
+      { "code": "COMPLAINTS", "label": "민원관리", "path": "/dashboard/complaints" }
+    ]
   }
 }
 ```
 
 - `redirectPath` 는 로그인 직후 이동할 화면입니다. 관리자는 `/dashboard`, 일반회원은 `/complaints` 입니다.
-- 개발용 관리자 계정은 `admin` / `admin1234!` 입니다. `app.seed.enabled=true` 일 때 자동으로 생성됩니다.
+- `adminType`, `adminTypeLabel`, `pages` 는 관리자 유형과 그 유형이 볼 수 있는 페이지입니다. `GET /auth/me` 에도 똑같이 내려갑니다. 일반회원은 `adminType`·`adminTypeLabel` 이 `null`, `pages` 가 빈 배열입니다.
+
+**관리자 유형별 열람 가능 페이지**
+
+`role` 은 그대로 `ADMIN` 이고, 그 안에서 유형(`adminType`)에 따라 볼 수 있는 페이지가 나뉩니다.
+
+| adminType | 이름 | 열람 가능 페이지 |
+| --- | --- | --- |
+| SYSTEM_ADMIN | 시스템 관리자 | 모든 페이지 |
+| DEPARTMENT_HEAD | 부서장 | 대시보드 |
+| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리 |
+| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리 |
+
+개발용 관리자 계정 8개 (광주교통공사 임직원 세부사항 "3. 사용자별 부서/직급 분배"):
+
+| 아이디 | 관리자 유형 | 부서 | 직급 | 열람 가능 페이지 |
+| --- | --- | --- | --- | --- |
+| admin | 시스템 관리자 | IT전략팀 | 차장 | 모든 페이지 |
+| admin2 | 시스템 관리자 | IT전략팀 | 과장 | 모든 페이지 |
+| depthead | 부서장 | 고객사업처 | 처장 | 대시보드 |
+| depthead2 | 부서장 | 차량운영처 | 처장 | 대시보드 |
+| cmanager | 민원 담당자 | 고객만족팀 | 대리 | 대시보드, 민원관리 |
+| cmanager2 | 민원 담당자 | 고객만족팀 | 주임 | 대시보드, 민원관리 |
+| vmanager | 차량 담당자 | 차량팀 | 부장 | 대시보드, 차량관리 |
+| vmanager2 | 차량 담당자 | 차량팀 | 차장 | 대시보드, 차량관리 |
+
+- 페이지와 API 의 대응: 대시보드 `/admin/dashboard`, 차량관리 `/admin/vehicles`, 배차관리 `/admin/dispatches`, 운행관리 `/admin/operations`, 민원관리 `/api/admin/complaints`, 회원관리 `/admin/members`. 배차관리·운행관리·회원관리는 시스템 관리자만 볼 수 있습니다.
+- 볼 수 없는 페이지의 API 를 호출하면 `403 FORBIDDEN` 입니다. 내 정보(`/admin/me`)는 모든 관리자가 쓸 수 있습니다.
+- 프론트는 `pages` 에 있는 메뉴만 보여주면 됩니다. 주소를 직접 쳐서 들어가도 서버가 API 를 막습니다.
+- 개발용 계정의 비밀번호는 모두 `admin1234!` 입니다. `app.seed.enabled=true` 일 때 서버가 켜지면서 없는 계정만 자동으로 만듭니다. 이미 있는 계정은 비어 있는 관리자 유형·부서·직급만 채우고, 비밀번호나 직접 고친 값은 건드리지 않습니다.
+- 소속 부서·직급 선택 목록(`GET /members/options`, `GET /admin/members/options`)도 같은 문서의 값입니다. 부서: 고객사업처, 차량운영처, 고객만족팀, 차량팀, IT전략팀 / 직급: 처장, 팀장, 부장, 차장, 과장, 대리, 주임
+- 유형이 비어 있는 관리자(이 기능 전에 만들어진 계정, 회원관리에서 관리자로 올린 계정)는 시스템 관리자로 취급합니다.
 
 #### ② 회원 (Member)
 
@@ -175,6 +214,7 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | PATCH | /admin/me | 관리자 본인 정보 수정 | 관리자 |
 
 - 목록의 연락처는 `010-****-1234` 처럼 가려서 내려갑니다. 상세에서는 전체가 보입니다.
+- 목록에도 소속 부서(`department`)와 직급(`position`)이 내려갑니다. 값이 없으면 `null` 입니다.
 - 목록 기본 정렬은 가입 순서(`id,asc`)입니다. 정렬 가능 필드: id, name, loginId, email, role, status, createdAt
 
 #### ③ 차량 (Vehicle) — [dashboard]
@@ -201,7 +241,8 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | GET | /admin/dispatches/{dispatchId} | 배차 상세 | 관리자 |
 | POST | /admin/dispatches | 배차 등록(차량 상태·시간 중복 검증 후 저장) | 관리자 |
 | PATCH | /admin/dispatches/{dispatchId} | 배차 수정(차량·날짜·시각이 바뀌면 status → CHANGED) | 관리자 |
-| PATCH | /admin/dispatches/{dispatchId}/cancel | 배차 취소(status → CANCELLED) | 관리자 |
+| PATCH | /admin/dispatches/{dispatchId}/cancel | 배차 취소(status → CANCELLED). 기록은 남는다 | 관리자 |
+| DELETE | /admin/dispatches/{dispatchId} | 배차 삭제(기록 자체를 지움, 상태와 상관없이 가능, 되돌릴 수 없음). 없는 배차면 404 | 관리자 |
 
 - 등록 본문: dispatchDate, vehicleId, driverName, departureTime, arrivalTime, remark
 - 상태(status): COMPLETED(배차 완료), WAITING(배차 대기), CHANGED(배차 변경), CANCELLED(배차 취소)
@@ -241,9 +282,9 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | GET | /api/complaints | 민원 목록(keyword, category, type, status, page, size) | 회원 |
 | GET | /api/complaints/options | 유형·분류·처리상태 선택 목록 | 회원 |
 | GET | /api/complaints/{id} | 민원 상세(본인 민원만) | 회원 |
-| POST | /api/complaints | 민원 등록(multipart: type, category, title, content, files) | 회원 |
+| POST | /api/complaints | 민원 등록(multipart: type, category, title, content, contentHtml, files) | 회원 |
 | PUT | /api/complaints/{id} | 민원 수정(multipart, 접수대기만, deleteFileIds) | 회원 |
-| DELETE | /api/complaints/{id} | 민원 삭제(접수대기만) | 회원 |
+| DELETE | /api/complaints/{id} | 민원 삭제(접수대기만). 실제로는 철회 처리 — 아래 "민원 삭제(철회)" 참고 | 회원 |
 | GET | /api/complaints/{id}/attachments/{attachmentId} | 첨부파일 다운로드 | 회원 |
 
 **[dashboard]** 관리자
@@ -259,8 +300,17 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 - 유형(type): SIMPLE(단순), SUGGESTION(건의), REPORT(제보), COMPLAINT(불만)
 - 분류(category): OPERATION(운행관련), FACILITY(시설물), ROUTE_TIME(노선/시간), FARE_PAYMENT(요금/결제), ETC(기타)
-- 처리상태(status): WAITING(접수대기), RECEIVED(답변중), ANSWERED(답변완료), TRANSFERRED(이관안내)
+- 처리상태(status): WAITING(접수대기), RECEIVED(답변중), ANSWERED(답변완료), TRANSFERRED(이관안내), WITHDRAWN(철회, 관리자 API 에서만 보임)
 - 첨부파일은 jpg, png, gif, pdf 만 가능하고 파일당 10MB 이하, 민원 1건당 최대 5개입니다.
+
+**민원 삭제(철회)**
+
+일반 사용자가 본인 민원을 삭제하면(`DELETE /api/complaints/{id}`, 접수대기일 때만) DB 에서 지우지 않고 처리상태를 `WITHDRAWN`(철회)으로 바꿉니다.
+
+- 사용자 화면: 삭제된 것과 같습니다. 응답은 그대로 204 이고, 이후 사용자 API(`/api/complaints` 목록·상세·수정·삭제·첨부 다운로드)에서는 그 민원이 나오지 않습니다(상세 등은 404). `GET /api/complaints/options` 의 `statuses` 에도 `WITHDRAWN` 은 없습니다.
+- 관리자 화면: 철회된 민원이 내용·첨부파일과 함께 그대로 남습니다. 목록에서 `status=WITHDRAWN` 으로 모아 볼 수 있고(응답의 `totalElements` 가 철회 건수), 목록·상세 응답의 `withdrawnAt` 에 철회 시각이 들어갑니다(철회 전이면 `null`).
+- 철회된 민원에는 답변을 등록할 수 없습니다(409 `COMPLAIN_WITHDRAWN`). 답변 등록의 `status` 로 `WITHDRAWN` 을 보낼 수도 없습니다(400 `INVALID_ANSWER_STATUS`).
+- 대시보드 답변건수 카드(`answers.byStatus`)에 `WITHDRAWN`(철회) 항목이 추가되어 기간별 철회 건수가 내려갑니다. 민원건수·답변건수 카드의 `total` 은 철회 건을 포함한 접수 건수입니다.
 
 **민원 분류(category) 등록**
 
@@ -269,6 +319,7 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 - 민원 양식의 분류 선택 목록은 `GET /api/complaints/options` 응답의 `categories` 를 씁니다. `code` 를 서버로 보내고 `label` 을 화면에 보여줍니다.
 - 등록(`POST /api/complaints`)과 수정(`PUT /api/complaints/{id}`)에서 `category` 는 multipart 의 일반 필드로, 위 `code` 값을 보냅니다. 예) `category=FACILITY`
 - `category` 는 선택 항목입니다. 보내지 않거나 비워 두면 `ETC`(기타)로 저장됩니다. (`type`, `title`, `content` 는 필수)
+- `contentHtml` 은 선택 항목입니다. 에디터의 서식(굵게, 목록, 링크)이 들어간 HTML 을 보내면 서버가 허용 태그(b, strong, i, em, u, br, p, div, ul, ol, li, a[href])만 남겨 저장하고, 상세 응답의 `contentHtml` 로 내려줍니다. 보내지 않으면 `null` 이며 화면은 `content` 를 그대로 보여주면 됩니다. 수정할 때 보내지 않으면 기존 서식은 지워집니다.
 - 저장된 분류는 목록·상세 응답에 `category`(코드)와 `categoryLabel`(화면 표시용 이름)로 내려가고, 목록의 `category` 필터로 검색할 수 있습니다.
 - 관리자 민원 등록(`POST /api/admin/complaints`)도 같은 규칙입니다.
 

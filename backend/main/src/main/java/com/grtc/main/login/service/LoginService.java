@@ -30,13 +30,16 @@ public class LoginService {
     // 비밀번호 암호화 및 일치 여부 비교에 사용하는 인코더
     private final PasswordEncoder passwordEncoder;
 
-    // 비밀번호 확인/아이디 중복을 검사한 뒤 비밀번호를 암호화해 회원을 저장하는 회원가입 처리
+    // 비밀번호 확인/아이디·이메일 중복을 검사한 뒤 비밀번호를 암호화해 회원을 저장하는 회원가입 처리
     @Transactional
     public SignUpResponseDto signUp(SignUpRequestDto request) {
         // 아이디는 공백 제거 + 소문자로 정규화, 이름은 공백 제거
         String loginId = normalizeLoginId(request.getLoginId());
         request.setLoginId(loginId);
         request.setName(request.getName().trim());
+        // 이메일도 공백 제거 + 소문자로 정규화 (내 정보 수정과 같은 규칙)
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        request.setEmail(email);
 
         // 회원가입 요청 로그 기록
         log.info("[signUp] 회원가입 요청 loginId={}", loginId);
@@ -49,6 +52,10 @@ public class LoginService {
         if (loginRepository.existsByLoginId(loginId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
+        // 이메일이 이미 존재하면 중복 이메일 예외 발생
+        if (loginRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        }
 
         // 비밀번호를 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -60,7 +67,8 @@ public class LoginService {
             // 저장된 회원 정보를 응답 DTO로 변환해 반환
             return SignUpResponseDto.from(saved);
         } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
+            // 위 검사를 통과한 직후 다른 요청이 같은 아이디/이메일로 먼저 가입한 경우 (어느 쪽인지는 여기서 알 수 없다)
+            throw new BusinessException(ErrorCode.DUPLICATE_ACCOUNT);
         }
     }
 

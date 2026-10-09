@@ -1,5 +1,6 @@
 package com.grtc.main.qna.complain;
 
+import com.grtc.main.global.common.HtmlSanitizer;
 import com.grtc.main.global.common.PageResponse;
 import com.grtc.main.global.common.Pages;
 import com.grtc.main.global.common.SearchUtil;
@@ -22,8 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,6 +31,7 @@ import java.util.Set;
 
 // 민원 등록/조회/수정/삭제, 첨부파일 다운로드 권한 확인을 담당하는 서비스 (사용자 화면)
 //  - 일반 사용자: 목록은 전체(남의 민원인 이름은 가림), 상세/수정/삭제는 본인이 쓴 민원만
+//  - 삭제는 실제 삭제가 아니라 '철회' 처리다. 철회된 민원은 이 서비스의 모든 조회에서 빠진다.
 //  - 관리자의 전체 민원 관리와 답변 등록은 dashboard 서버(/api/admin/complaints)에서 처리한다.
 @Slf4j
 @Service
@@ -39,9 +39,8 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class ComplainService {
 
-    private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
-
     private final ComplainRepository complainRepository;
+    private final ComplainNoGenerator complainNoGenerator;
     private final LoginService loginService;
     private final FileService fileService;
 
@@ -86,16 +85,13 @@ public class ComplainService {
     public ComplainDto.Detail create(Long userId, ComplainDto.SaveRequest request, List<MultipartFile> files) {
         LoginEntity me = loginService.getActiveMember(userId);
 
-        // 민원번호: CM + 오늘(yyMMdd) + - + 그날의 일련번호(3자리)
-        String prefix = "CM" + LocalDate.now().format(NO_DATE) + "-";
-        long sequence = complainRepository.countByComplainNoStartingWith(prefix) + 1;
-
         ComplainEntity saved = complainRepository.save(ComplainEntity.builder()
-                .complainNo(prefix + String.format("%03d", sequence))
+                .complainNo(complainNoGenerator.next()) // CM + 오늘(yyMMdd) + - + 그날의 일련번호 (중복 없이 생성)
                 .type(request.type())
                 .category(categoryOrDefault(request.category()))
                 .title(request.title().trim())
                 .content(request.content().trim())
+                .contentHtml(HtmlSanitizer.clean(request.contentHtml()))
                 .writer(me)
                 .build());
 
@@ -135,12 +131,15 @@ public class ComplainService {
         fileService.store(complain, files);
 
         complain.update(request.type(), categoryOrDefault(request.category()),
-                request.title().trim(), request.content().trim());
+                request.title().trim(), request.content().trim(),
+                HtmlSanitizer.clean(request.contentHtml()));
         log.info("[complain] 수정 id={}", id);
         return toDetail(complain, me);
     }
 
-    // 민원 삭제: 작성자 본인 + 접수대기 상태에서만. 딸린 첨부파일도 함께 지운다.
+    // 민원 삭제(= 철회): 작성자 본인 + 접수대기 상태에서만.
+    //  - 민원인에게는 삭제된 것으로 보인다. (이후 사용자 목록/상세/수정/첨부 다운로드에서 '없는 민원')
+    //  - 실제로는 줄을 지우지 않고 상태만 '철회'로 바꾼다. 내용과 첨부파일은 관리자 화면·집계용으로 남긴다.
     @Transactional
     public void delete(Long userId, Long id) {
         LoginEntity me = loginService.getActiveMember(userId);
@@ -148,9 +147,8 @@ public class ComplainService {
         requireOwner(me, complain);
         requireWaiting(complain);
 
-        fileService.findByComplain(id).forEach(a -> fileService.delete(a.getId()));
-        complainRepository.delete(complain);
-        log.info("[complain] 삭제 id={}", id);
+        complain.withdraw();
+        log.info("[complain] 철회 id={} writerId={}", id, me.getId());
     }
 
     // =========================================================
@@ -179,7 +177,9 @@ public class ComplainService {
                         .map(t -> new ComplainDto.LabelValue(t.name(), t.getLabel())).toList(),
                 Arrays.stream(ComplainCategory.values())
                         .map(c -> new ComplainDto.LabelValue(c.name(), c.getLabel())).toList(),
+                // '철회'는 사용자 화면에 보이지 않는 상태라 선택 목록에서 뺀다.
                 Arrays.stream(ComplainStatus.values())
+                        .filter(s -> s != ComplainStatus.WITHDRAWN)
                         .map(s -> new ComplainDto.LabelValue(s.name(), s.getLabel())).toList()
         );
     }
@@ -189,9 +189,11 @@ public class ComplainService {
     // =========================================================
 
     // 검색 조건 조립: 검색어, 분류, 유형, 처리상태
+    //  - 철회된 민원은 사용자 목록에서 항상 제외한다. (민원인에게는 삭제된 글)
     private Specification<ComplainEntity> spec(ComplainDto.SearchCondition condition) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.notEqual(root.get("status"), ComplainStatus.WITHDRAWN));
 
             if (condition != null) {
                 if (SearchUtil.hasText(condition.keyword())) {
@@ -219,9 +221,13 @@ public class ComplainService {
     }
 
     // 볼 수 있는 민원만 조회: 관리자는 전부, 일반 사용자는 본인 것만 (남의 것은 '없는 민원'으로 응답)
+    //  - 철회된 민원은 이 사용자 API 에서는 누구에게나 '없는 민원'이다. (관리자는 /api/admin/complaints 로 본다)
     private ComplainEntity findAccessible(LoginEntity me, Long id) {
         ComplainEntity complain = complainRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMPLAIN_NOT_FOUND));
+        if (complain.isWithdrawn()) {
+            throw new BusinessException(ErrorCode.COMPLAIN_NOT_FOUND);
+        }
         if (me.getRole() != Role.ADMIN && !complain.getWriter().getId().equals(me.getId())) {
             throw new BusinessException(ErrorCode.COMPLAIN_NOT_FOUND);
         }
@@ -267,6 +273,7 @@ public class ComplainService {
                 c.getCategory().getLabel(),
                 c.getTitle(),
                 c.getContent(),
+                c.getContentHtml(),
                 c.getWriter().getId(),
                 c.getWriter().getName(),
                 c.getStatus(),

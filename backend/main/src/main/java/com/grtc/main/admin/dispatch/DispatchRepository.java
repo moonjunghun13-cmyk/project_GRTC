@@ -14,8 +14,13 @@ public interface DispatchRepository extends JpaRepository<DispatchEntity, Long>,
     // 차량 삭제 가능 여부 확인용 (배차 이력이 있는 차량은 삭제 불가)
     boolean existsByVehicleId(Long vehicleId);
 
-    // 배차번호 일련번호 계산용 (같은 배차일의 배차 수)
-    long countByDispatchDate(LocalDate dispatchDate);
+    // 배차번호 일련번호 계산용: 배차일 접두사(DISP260930-)로 시작하는 배차번호 중 가장 큰 일련번호. 없으면 0
+    //  - start: 일련번호가 시작하는 위치(1부터 센다) = 접두사 길이 + 1
+    //  - 문자열이 아니라 숫자로 비교한다. (문자열로 비교하면 1000 이 999 보다 작다고 나온다)
+    //  - 배차일 칸이 아니라 배차번호로 찾는다. (배차일을 수정해도 배차번호는 처음 날짜 그대로이기 때문)
+    @Query("select coalesce(max(cast(substring(d.dispatchNo, :start) as integer)), 0) "
+            + "from DispatchEntity d where d.dispatchNo like concat(:prefix, '%')")
+    int findMaxSequence(@Param("prefix") String prefix, @Param("start") int start);
 
     // 같은 차량, 같은 날에 시간이 겹치는 배차(취소 제외, 자기 자신 제외)가 몇 건인지
     // 겹침 조건: 기존 출발 < 새 도착  AND  기존 도착 > 새 출발
