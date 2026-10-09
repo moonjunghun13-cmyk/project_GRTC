@@ -44,7 +44,7 @@ const stations = [first, second, third].flatMap((row, r) => row.map((lines, i) =
 <style scoped>
 .operations-page { position: relative; min-height: calc(100svh - 134px); display: flex; flex-direction: column; isolation: isolate; }
 .operations-heading { position: relative; z-index: 1; padding: 0 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
-.operations-heading h1 { margin: 0; color: #00699f; font-size: 44px; font-weight: 900; line-height: 1.3; }
+.operations-heading h1 { margin: 0; color: #00699f; font-size: 44px; font-weight: 800; line-height: 1.3; }
 .destination-legend { display: block; width: 270px; height: auto; margin-top: 0; flex-shrink: 0; }
 .route-scroll { position: relative; z-index: 1; overflow-x: auto; flex-shrink: 0; margin-top: 0; padding-bottom: 0; }
 .route-scroll:focus-visible { outline: 2px solid #0078ae; outline-offset: -2px; }

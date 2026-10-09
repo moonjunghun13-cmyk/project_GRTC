@@ -1,6 +1,6 @@
 .members-page { width: 100%; min-width: 0; margin: 0; color: #173554; }
 .members-heading { margin-bottom: 28px; }
-.members-heading h1 { margin: 0 0 10px; color: #064b76; font-size: 40px; font-weight: 900; line-height: 1.3; }
+.members-heading h1 { margin: 0 0 10px; color: #064b76; font-size: 40px; font-weight: 800; line-height: 1.3; }
 .members-heading p { margin: 0; color: #7a858f; font-size: 18px; line-height: 1.5; }
 .member-summary, .member-edit-card, .member-list-card { background: #fff; border: 1px solid #dce5ec; border-radius: 18px; }
 .member-summary { position: relative; display: flex; align-items: center; gap: 48px; padding: 24px 32px; margin-bottom: 28px; }

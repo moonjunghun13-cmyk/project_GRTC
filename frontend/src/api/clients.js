@@ -38,6 +38,8 @@ export function reissueAccessToken() {
   }
   return reissuing
 }
+// 프론트 브랜치(feat/frontend) 코드 호환용 별칭
+export const refreshAccessToken = reissueAccessToken
 function errorCode(error) { return error?.response?.data?.error?.code ?? error?.response?.data?.code }
 for (const api of [mainApi, dashboardApi]) api.interceptors.response.use(response => response, async error => {
   const config = error?.config
@@ -72,3 +74,4 @@ export function installApiErrorHandlers(handler) {
     return Promise.reject(error)
   })
 }
+export async function general(method,url,data,params){return (await mainApi.request({method,url,data,params})).data.data}

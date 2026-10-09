@@ -24,7 +24,6 @@ async function submit() {
     }
     const { data } = await login(loginId.value, password.value)
     if (!['/dashboard', '/complaints'].includes(data?.redirectPath)) throw new Error('로그인 응답의 redirectPath를 확인해 주세요.')
-    auth.clear()
     const user = await auth.restore(true)
     if (!user) throw new Error('로그인 세션을 확인할 수 없습니다.')
     if (data.redirectPath === '/dashboard' && user.role !== 'ADMIN') throw new Error('로그인 이동 경로와 사용자 권한이 일치하지 않습니다.')
@@ -53,4 +52,5 @@ async function submit() {
     <p v-if="message" class="authentication-message" role="status">{{ message }}</p>
   </section>
 </template>
+
 

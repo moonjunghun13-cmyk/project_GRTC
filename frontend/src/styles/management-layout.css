@@ -1,4 +1,4 @@
-.management-shell { --sidebar-width: 265px; height: 100svh; display: flex; flex-direction: column; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+.management-shell { --sidebar-width: 265px; height: 100svh; display: flex; flex-direction: column; font-family: var(--font-family); }
 .management-shell .app-body { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
 .management-shell .app-content { min-width: 0; overflow: auto; padding: 32px; background: #fff; }
 @media (max-width: 600px) { .management-shell { --sidebar-width: 220px; } .management-shell .app-content { padding: 16px; } }
