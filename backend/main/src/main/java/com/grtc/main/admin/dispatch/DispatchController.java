@@ -1,5 +1,9 @@
 package com.grtc.main.admin.dispatch;
 
+import com.grtc.main.admin.timetable.DayType;
+import com.grtc.main.admin.timetable.MoveType;
+import com.grtc.main.admin.timetable.TimetableDto;
+import com.grtc.main.admin.timetable.TimetableService;
 import com.grtc.main.global.common.ApiResponse;
 import com.grtc.main.global.common.PageResponse;
 import com.grtc.main.global.common.Pages;
@@ -28,9 +32,10 @@ import java.time.LocalDate;
 public class DispatchController {
 
     private final DispatchService dispatchService;
+    private final TimetableService timetableService;
 
-    // 배차 목록 (검색어, 배차일자(yyyy-MM-dd), 차량, 운전자, 상태 필터, 페이징: page 0부터)
-    //   예) GET /api/v1/admin/dispatches?date=2026-09-30&status=WAITING&page=0&size=10&sort=dispatchDate,desc
+    // 배차 목록 (검색어, 배차일자(yyyy-MM-dd), 차량, 운전자, 상태, 입·출고 구분(DEPART/RETURN) 필터, 페이징: page 0부터)
+    //   예) GET /api/v1/admin/dispatches?date=2026-09-30&moveType=DEPART&page=0&size=10&sort=departureTime,asc
     @GetMapping
     public ApiResponse<PageResponse<DispatchDto.Response>> list(
             @RequestParam(required = false) String keyword,
@@ -38,11 +43,12 @@ public class DispatchController {
             @RequestParam(required = false) Long vehicleId,
             @RequestParam(required = false) String driver,
             @RequestParam(required = false) DispatchStatus status,
+            @RequestParam(required = false) MoveType moveType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort
     ) {
-        return ApiResponse.ok(dispatchService.list(keyword, date, vehicleId, driver, status,
+        return ApiResponse.ok(dispatchService.list(keyword, date, vehicleId, driver, status, moveType,
                 Pages.request(page, size, sort, DispatchService.DEFAULT_SORT, DispatchService.SORTABLE)));
     }
 
@@ -53,9 +59,34 @@ public class DispatchController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) Long vehicleId,
-            @RequestParam(required = false) String driver
+            @RequestParam(required = false) String driver,
+            @RequestParam(required = false) MoveType moveType
     ) {
-        return ApiResponse.ok(dispatchService.summary(keyword, date, vehicleId, driver));
+        return ApiResponse.ok(dispatchService.summary(keyword, date, vehicleId, driver, moveType));
+    }
+
+    // 입·출고 시간표 (원본: 광주 도시철도 입·출고 시간표)
+    //   GET /api/v1/admin/dispatches/timetable?date=2026-10-09  -> 그 날짜의 평일/토요일/휴일 시간표
+    //   GET /api/v1/admin/dispatches/timetable?dayType=SATURDAY -> 해당 구분 시간표
+    //   둘 다 없으면 오늘 날짜 기준
+    @GetMapping("/timetable")
+    public ApiResponse<TimetableDto.Response> timetable(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) DayType dayType
+    ) {
+        if (dayType != null && date == null) {
+            return ApiResponse.ok(timetableService.get(dayType));
+        }
+        return ApiResponse.ok(timetableService.get(date != null ? date : LocalDate.now()));
+    }
+
+    // 입·출고 시간표로 그 날짜의 배차 만들기 (출고 1회·입고 1회가 각각 배차 1건)
+    //   POST /api/v1/admin/dispatches/generate?date=2026-10-10
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<DispatchDto.GenerateResult>> generate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(dispatchService.generate(date)));
     }
 
     // 필터/등록 폼의 차량·운전자 선택 목록

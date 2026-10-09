@@ -2,6 +2,8 @@ package com.grtc.main.admin.dashboard;
 
 import com.grtc.main.admin.operation.OperationDto;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 // 대시보드 화면 응답 모음
@@ -47,13 +49,40 @@ public final class DashboardDto {
     ) {
     }
 
+    // 입·출고 한 건 (다음 출고 / 다음 입고 표시용)
+    public record DepotMove(String trainNo, LocalTime time) {
+    }
+
+    // 시간대별 입·출고 횟수 (hour 5 = 05시대, 24 = 0시대(그날 운행의 마지막))
+    public record HourCount(int hour, long departs, long returns) {
+    }
+
+    // 입·출고현황 카드 (오늘 운행일 기준, 입·출고 시간표)
+    //  - source: DISPATCH = 배차관리의 입·출고 배차(취소 제외)로 계산, TIMETABLE = 그날 배차가 없어 시간표 그대로 계산
+    public record DepotCard(
+            LocalDate date,
+            String dayType,
+            String dayTypeLabel,
+            String source,
+            long departTotal,      // 오늘 출고 예정 전체
+            long returnTotal,      // 오늘 입고 예정 전체
+            long departDone,       // 지금까지 출고
+            long returnDone,       // 지금까지 입고
+            long outNow,           // 지금 본선에 나가 있는 열차 수 (출고 - 입고)
+            DepotMove nextDepart,  // 다음 출고 (없으면 null)
+            DepotMove nextReturn,  // 다음 입고 (없으면 null)
+            List<HourCount> hourly
+    ) {
+    }
+
     // 대시보드 화면 전체
     public record Response(
             OperationDto.RouteInfo route,        // 노선운영현황 (노선 정보가 아직 없으면 null)
             VehicleStatusCard vehicles,          // 차량운행현황
             OperationRateCard operationRate,     // 가동률
             ComplainCountCard complaints,        // 민원건수
-            AnswerCountCard answers              // 답변건수
+            AnswerCountCard answers,             // 답변건수
+            DepotCard depot                      // 입·출고현황 (시간표가 없으면 null)
     ) {
     }
 

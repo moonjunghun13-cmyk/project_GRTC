@@ -6,7 +6,13 @@ import star from '../../assets/star2.png'
 import mad from '../../assets/mad.png'
 import DashboardIcon from '../../components/common/DashboardIcon.vue'
 import { useDashboardFrame, periods, displayNumber as n } from '../../composables/useDashboardFrame'
-const { data, dispatchSummary, complaintPeriod, answerPeriod, error } = useDashboardFrame()
+const { data, depot, complaintPeriod, answerPeriod, error } = useDashboardFrame()
+// 입·출고현황 시간대별 막대 (05시대 ~ 0시대)
+const hourMax = computed(() => Math.max(1, ...(depot.value?.hourly ?? []).map(h => Math.max(h.departs, h.returns))))
+const currentHour = computed(() => { depot.value; const h = new Date().getHours(); return Math.min(24, h < 3 ? h + 24 : h) }) // depot 이 1분마다 갱신되면 함께 다시 계산
+const hourLabel = h => String(h % 24).padStart(2, '0')
+const shortDate = v => v ? v.slice(5).replace('-', '.') : ''
+const moveTime = m => m ? m.time.slice(0, 5) : '—'
 const vehicleLegend = [{label:'운행',key:'operating',color:'#0085ca'},{label:'대기',key:'waiting',color:'#a4d9f0'},{label:'정비',key:'maintenance',color:'#c6cdd5'},{label:'운행정지',key:'stopped',color:'#d98888'}]
 const characterTypes=[{code:'SIMPLE',label:'단순',image:normal,footOffset:(1254-1238)/1254*100},{code:'SUGGESTION',label:'건의',image:loud,footOffset:(1145-1119)/1145*100},{code:'REPORT',label:'제보',image:star,footOffset:(1448-1391)/1448*100},{code:'COMPLAINT',label:'불만',image:mad,footOffset:(1536-1518)/1536*100}]
 const complaintCharacters=computed(()=>characterTypes.map(type=>({...type,value:data.complaints.find(item=>item.code===type.code||item.label===type.label)?.value??null})))
@@ -44,7 +50,11 @@ const percentage = (value,total) => value == null || total == null ? '—%' : (t
   <section class="dashboard-frame" aria-label="관리자 대시보드">
       <article class="dashboard-card route-card"><RouterLink class="card-navigation" to="/dashboard/operations" aria-label="노선운영현황: 운행관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="train" /><h2>노선운영현황 <span class="card-arrow" aria-hidden="true">↗</span></h2></div><span class="waiting-badge">{{data.routeStatus || '정보 대기'}}</span></header><div class="route-card-body"><h3>{{data.routeName || '광주 도시철도 1호선'}}</h3><div class="decorative-route" aria-label="녹동과 평동"><span>녹동</span><div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><span>평동</span></div></div><footer class="route-stats"><div><span>운행 역수</span><strong>{{ n(data.stations) }}<small>개</small></strong></div><div><span>운행 횟수</span><strong>{{ n(data.trips) }}<small>회</small></strong></div></footer></article>
       <article class="dashboard-card vehicle-card"><RouterLink class="card-navigation" to="/dashboard/vehicles" aria-label="차량운행현황: 차량관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="vehicle" /><h2>차량운행현황 <span class="card-arrow" aria-hidden="true">↗</span></h2></div><p class="dashboard-total vehicle-operating-total">운행 중 <strong>{{ n(data.operating) }}</strong><small>대</small></p></header><div class="vehicle-card-body"><div class="vehicle-pie" role="img" :aria-label="vehicleLegend.map(item=>item.label+' '+n(data[item.key])+'대, '+percentage(data[item.key],data.fleet)).join('; ')" :style="{background:vehicleGradient}"><div class="vehicle-pie-center"><span>전체 차량</span><strong>{{n(data.fleet)}}<small>대</small></strong></div></div></div><footer class="vehicle-legend"><div v-for="item in vehicleLegend" :key="item.key"><span><i :style="{background:item.color}"></i>{{ item.label }}</span><strong>{{ n(data[item.key]) }}대</strong><small class="stat-percentage">{{percentage(data[item.key],data.fleet)}}</small></div></footer></article>
-      <article class="dashboard-card dispatch-card"><RouterLink class="card-navigation" to="/dashboard/dispatches" aria-label="배차현황: 배차관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="vehicle"/><h2>배차현황 <span class="card-arrow" aria-hidden="true">↗</span></h2></div></header><p class="dashboard-total dispatch-total">전체 <strong>{{ n(dispatchSummary.total) }}</strong><small>건</small></p><div class="dispatch-states"><div v-for="item in dispatchSummary.states" :key="item.value" :data-tone="item.tone"><span><i aria-hidden="true"></i>{{item.label}}</span><strong>{{n(item.count)}}<small>건</small></strong></div></div></article>
+      <article class="dashboard-card dispatch-card depot-card"><RouterLink class="card-navigation" to="/dashboard/dispatches" aria-label="입·출고현황: 배차관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="vehicle"/><h2>입·출고현황 <span class="card-arrow" aria-hidden="true">↗</span></h2></div><span class="waiting-badge">{{depot ? shortDate(depot.date)+' · '+depot.dayTypeLabel : '정보 대기'}}</span></header>
+        <template v-if="depot"><div class="depot-stats"><div data-tone="blue"><span><i aria-hidden="true"></i>출고</span><strong>{{depot.departDone}}<small>/ {{depot.departTotal}}회</small></strong></div><div data-tone="green"><span><i aria-hidden="true"></i>입고</span><strong>{{depot.returnDone}}<small>/ {{depot.returnTotal}}회</small></strong></div><div data-tone="navy"><span><i aria-hidden="true"></i>운행 중</span><strong>{{depot.outNow}}<small>편성</small></strong></div></div>
+        <p class="depot-next"><span>다음 출고 <b>{{depot.nextDepart ? depot.nextDepart.trainNo+' · '+moveTime(depot.nextDepart) : '없음'}}</b></span><span>다음 입고 <b>{{depot.nextReturn ? depot.nextReturn.trainNo+' · '+moveTime(depot.nextReturn) : '없음'}}</b></span></p>
+        <div class="depot-hours" role="img" :aria-label="'시간대별 출고·입고: '+depot.hourly.filter(h=>h.departs||h.returns).map(h=>hourLabel(h.hour)+'시 출고 '+h.departs+'회 입고 '+h.returns+'회').join(', ')"><div v-for="h in depot.hourly" :key="h.hour" class="depot-hour" :class="{now:h.hour===currentHour}"><div class="bars"><i class="depart" :style="{height:h.departs/hourMax*100+'%'}"></i><i class="return" :style="{height:h.returns/hourMax*100+'%'}"></i></div><small>{{(h.hour-5)%3===0 ? hourLabel(h.hour) : ''}}</small></div></div></template>
+        <p v-else class="depot-empty">입·출고 시간표 정보를 불러오는 중입니다.</p></article>
       <article class="dashboard-card complaint-card"><RouterLink class="card-navigation" to="/dashboard/complaints" aria-label="민원건수: 민원관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="complaint"/><h2>민원건수 <span class="card-arrow" aria-hidden="true">↗</span></h2></div><div class="complaint-heading-controls"><p class="complaint-total">총 <strong>{{n(data.complaintTotal)}}</strong><small>건</small></p><select v-model="complaintPeriod" @click.stop @keydown.stop aria-label="민원건수 기간"><option v-for="period in periods" :key="period.value" :value="period.value">{{period.label}}</option></select></div></header><div class="complaint-characters"><div v-for="item in complaintCharacters" :key="item.code" class="complaint-character" :data-type="item.code"><h3 class="character-category">{{item.label}}</h3><div class="character-stage"><span v-if="item.value>0" class="character-bar" aria-hidden="true" :style="{height:complaintBarHeight(item.value)}"></span><img :src="item.image" :alt="item.label+' 민원 캐릭터'" :style="{height:characterSize(item.value),'--foot-offset':item.footOffset+'%'}"/></div><p class="character-count"><strong>{{n(item.value)}}건</strong><small class="stat-percentage">{{percentage(item.value,data.complaintTotal)}}</small></p></div></div></article>
       <article class="dashboard-card answer-card"><RouterLink class="card-navigation" to="/dashboard/complaints" aria-label="답변건수: 민원관리로 이동"/><header class="dashboard-card-heading"><div><DashboardIcon type="answer" /><h2>답변건수 <span class="card-arrow" aria-hidden="true">↗</span></h2></div><select v-model="answerPeriod" @click.stop @keydown.stop aria-label="답변건수 기간"><option v-for="period in periods" :key="period.value" :value="period.value">{{ period.label }}</option></select></header><p class="dashboard-total">총 <strong>{{ n(data.answerTotal) }}</strong><small>건</small></p><div class="answer-chart"><div v-for="item in data.answers" :key="item.label" class="answer-row"><span>{{ item.label }}</span><div class="answer-track"><i v-if="item.value != null" :style="{width:item.value / answerMax() * 100 + '%',backgroundColor:answerColor(item.value)}"></i></div><strong class="answer-count">{{ n(item.value) }}건<small class="stat-percentage">{{percentage(item.value,data.answerTotal)}}</small></strong></div></div></article>
   </section>
@@ -183,5 +193,26 @@ const percentage = (value,total) => value == null || total == null ? '—%' : (t
  to { opacity: 1; transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .vehicle-pie { animation: none; } }
+/* 입·출고현황 카드 */
+.depot-card{gap:10px;}
+.depot-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px;}
+.depot-stats>div{display:flex;flex-direction:column;gap:4px;background:#f7fbfd;border-radius:10px;padding:8px 10px;min-width:0;}
+.depot-stats span{display:flex;align-items:center;gap:6px;font-size:14px;color:#607d90;white-space:nowrap;}
+.depot-stats i{width:7px;height:7px;border-radius:50%;background:#3d8fd1;}
+.depot-stats [data-tone=green] i{background:#51a276;}
+.depot-stats [data-tone=navy] i{background:#064b76;}
+.depot-stats strong{font-size:24px;font-weight:800;white-space:nowrap;}
+.depot-stats small{font-size:13px;font-weight:500;margin-left:3px;color:#607d90;}
+.depot-next{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:14px;color:#607d90;}
+.depot-next b{color:#173e5c;font-weight:700;}
+.depot-hours{flex:1;min-height:56px;display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:2px;align-items:end;}
+.depot-hour{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;border-radius:4px;}
+.depot-hour.now{background:#eef7fc;}
+.depot-hour .bars{flex:1;width:100%;display:flex;justify-content:center;align-items:flex-end;gap:1px;min-height:0;}
+.depot-hour .bars i{width:40%;max-width:6px;border-radius:2px 2px 0 0;}
+.depot-hour .depart{background:#3d8fd1;}
+.depot-hour .return{background:#7cc49a;}
+.depot-hour small{font-size:11px;color:#8798a5;line-height:1;height:11px;}
+.depot-empty{margin:auto 0;color:#7c8d9a;font-size:15px;}
 </style>
 

@@ -1,5 +1,7 @@
 package com.grtc.main.admin.dispatch;
 
+import com.grtc.main.admin.timetable.DayType;
+import com.grtc.main.admin.timetable.MoveType;
 import com.grtc.main.global.common.PageResponse;
 import com.grtc.main.global.common.SearchUtil;
 import com.grtc.main.global.exception.BusinessException;
@@ -19,13 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-// 배차관리(조회/검색/등록/수정/취소) 비즈니스 로직
+// 배차관리(조회/검색/등록/수정/취소/삭제, 입·출고 시간표로 배차 만들기) 비즈니스 로직
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,29 +37,45 @@ public class DispatchService {
     // 목록 정렬: sort 를 보내지 않으면 화면과 같이 최근 배차일 먼저, 같은 날은 배차번호 순
     public static final Sort DEFAULT_SORT = Sort.by(Sort.Order.desc("dispatchDate"), Sort.Order.asc("dispatchNo"));
     public static final Set<String> SORTABLE = Set.of(
-            "id", "dispatchNo", "dispatchDate", "driverName", "departureTime", "arrivalTime", "status", "createdAt");
-
-    private static final DateTimeFormatter NO_DATE = DateTimeFormatter.ofPattern("yyMMdd");
+            "id", "dispatchNo", "dispatchDate", "driverName", "departureTime", "arrivalTime", "status", "createdAt",
+            "trainNo", "moveType");
 
     private final DispatchRepository dispatchRepository;
+    private final DispatchNoGenerator dispatchNoGenerator;
+    private final DispatchTimetableGenerator timetableGenerator;
     private final VehicleRepository vehicleRepository;
 
-    // 배차 목록: 검색어(배차번호/차량번호/운전자명) + 배차일자/차량/운전자/상태 필터 + 페이징
+    // 배차 목록: 검색어(배차번호/차량번호/운전자명/열번) + 배차일자/차량/운전자/상태/입·출고 구분 필터 + 페이징
     public PageResponse<DispatchDto.Response> list(String keyword, LocalDate date, Long vehicleId, String driver,
                                                    DispatchStatus status, Pageable pageable) {
+        return list(keyword, date, vehicleId, driver, status, null, pageable);
+    }
+
+    public PageResponse<DispatchDto.Response> list(String keyword, LocalDate date, Long vehicleId, String driver,
+                                                   DispatchStatus status, MoveType moveType, Pageable pageable) {
         Page<DispatchEntity> result = dispatchRepository.findAll(
-                spec(keyword, date, vehicleId, driver, status), pageable);
+                spec(keyword, date, vehicleId, driver, status, moveType), pageable);
         return PageResponse.from(result, DispatchDto.Response::from);
     }
 
-    // 상단 요약 카드: 상태 필터를 제외한 검색 조건(검색어, 배차일자, 차량, 운전자) 기준으로 센다.
+    // 상단 요약 카드: 상태 필터를 제외한 검색 조건(검색어, 배차일자, 차량, 운전자, 구분) 기준으로 센다.
+    //  - 출고/입고 건수는 취소를 뺀 건수다.
     public DispatchDto.Summary summary(String keyword, LocalDate date, Long vehicleId, String driver) {
+        return summary(keyword, date, vehicleId, driver, null);
+    }
+
+    public DispatchDto.Summary summary(String keyword, LocalDate date, Long vehicleId, String driver,
+                                       MoveType moveType) {
         return new DispatchDto.Summary(
-                dispatchRepository.count(spec(keyword, date, vehicleId, driver, null)),
-                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.COMPLETED)),
-                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.WAITING)),
-                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CHANGED)),
-                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CANCELLED))
+                dispatchRepository.count(spec(keyword, date, vehicleId, driver, null, moveType)),
+                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.COMPLETED, moveType)),
+                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.WAITING, moveType)),
+                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CHANGED, moveType)),
+                dispatchRepository.count(spec(keyword, date, vehicleId, driver, DispatchStatus.CANCELLED, moveType)),
+                moveType == MoveType.RETURN ? 0 : dispatchRepository.count(
+                        notCancelled(spec(keyword, date, vehicleId, driver, null, MoveType.DEPART))),
+                moveType == MoveType.DEPART ? 0 : dispatchRepository.count(
+                        notCancelled(spec(keyword, date, vehicleId, driver, null, MoveType.RETURN)))
         );
     }
 
@@ -67,17 +85,27 @@ public class DispatchService {
     }
 
     // 배차 등록: 시간 순서/차량 상태/차량 시간 겹침을 검사하고, 배차번호를 만들어 '배차 대기'로 저장
+    //  - 입·출고 배차(moveType 있음)는 시각이 하나라서 도착시간 = 출고(입고) 시각으로 저장하고 열번이 필수다.
     @Transactional
     public DispatchDto.Response create(DispatchDto.Request request) {
-        validateTime(request.departureTime(), request.arrivalTime());
+        boolean depotMove = request.moveType() != null;
+        LocalTime arrivalTime = depotMove ? request.departureTime() : request.arrivalTime();
+        if (depotMove) {
+            if (request.trainNo() == null || request.trainNo().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT);
+            }
+        } else {
+            if (arrivalTime == null) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT); // 일반 배차는 도착시간 필수
+            }
+            validateTime(request.departureTime(), arrivalTime);
+        }
         VehicleEntity vehicle = findVehicle(request.vehicleId());
         checkAvailable(vehicle);
-        checkOverlap(vehicle.getId(), request.dispatchDate(),
-                request.departureTime(), request.arrivalTime(), -1L);
+        checkOverlap(vehicle.getId(), request.dispatchDate(), request.departureTime(), arrivalTime, -1L);
 
-        // 배차번호: DISP + 배차일(yyMMdd) + - + 그날의 일련번호(3자리)
-        long sequence = dispatchRepository.countByDispatchDate(request.dispatchDate()) + 1;
-        String dispatchNo = "DISP" + request.dispatchDate().format(NO_DATE) + "-" + String.format("%03d", sequence);
+        // 배차번호: DISP + 배차일(yyMMdd) + - + 그날의 일련번호 (삭제로 번호가 비어 있어도 겹치지 않게 생성)
+        String dispatchNo = dispatchNoGenerator.next(request.dispatchDate());
 
         DispatchEntity saved = dispatchRepository.save(DispatchEntity.builder()
                 .dispatchNo(dispatchNo)
@@ -85,7 +113,10 @@ public class DispatchService {
                 .vehicle(vehicle)
                 .driverName(request.driverName().trim())
                 .departureTime(request.departureTime())
-                .arrivalTime(request.arrivalTime())
+                .arrivalTime(arrivalTime)
+                .moveType(request.moveType())
+                .trainNo(depotMove ? request.trainNo().trim() : null)
+                .dayType(depotMove ? DayType.of(request.dispatchDate()) : null)
                 .remark(blankToNull(request.remark()))
                 .status(DispatchStatus.WAITING)
                 .build());
@@ -106,7 +137,9 @@ public class DispatchService {
         // 보내지 않은 항목은 기존 값을 그대로 쓴다.
         LocalDate dispatchDate = request.dispatchDate() != null ? request.dispatchDate() : dispatch.getDispatchDate();
         LocalTime departureTime = request.departureTime() != null ? request.departureTime() : dispatch.getDepartureTime();
-        LocalTime arrivalTime = request.arrivalTime() != null ? request.arrivalTime() : dispatch.getArrivalTime();
+        // 입·출고 배차는 시각이 하나라서 도착시간을 출고(입고) 시각과 같게 맞춘다.
+        LocalTime arrivalTime = dispatch.isDepotMove() ? departureTime
+                : (request.arrivalTime() != null ? request.arrivalTime() : dispatch.getArrivalTime());
         String driverName = request.driverName() != null ? request.driverName().trim() : dispatch.getDriverName();
         String remark = request.remark() != null ? blankToNull(request.remark()) : dispatch.getRemark();
 
@@ -114,7 +147,9 @@ public class DispatchService {
                 && !request.vehicleId().equals(dispatch.getVehicle().getId());
         VehicleEntity vehicle = vehicleChanged ? findVehicle(request.vehicleId()) : dispatch.getVehicle();
 
-        validateTime(departureTime, arrivalTime);
+        if (!dispatch.isDepotMove()) {
+            validateTime(departureTime, arrivalTime);
+        }
         if (vehicleChanged) {
             checkAvailable(vehicle);
         }
@@ -151,6 +186,19 @@ public class DispatchService {
         return DispatchDto.Response.from(dispatch);
     }
 
+    // 입·출고 시간표로 그 날짜의 배차를 만든다. (평일/토요일/휴일 시간표 자동 선택)
+    //  - 이미 그 날짜에 시간표 배차가 있으면 만들지 않는다. (다시 만들려면 기존 배차를 지운 뒤)
+    @Transactional
+    public DispatchDto.GenerateResult generate(LocalDate date) {
+        if (dispatchRepository.existsByDispatchDateAndMoveTypeIsNotNull(date)) {
+            throw new BusinessException(ErrorCode.DISPATCH_ALREADY_GENERATED);
+        }
+        List<DispatchEntity> created = dispatchRepository.saveAll(timetableGenerator.build(date, LocalDateTime.now()));
+        DayType dayType = DayType.of(date);
+        log.info("[dispatch] 시간표 배차 생성 date={} dayType={} count={}", date, dayType, created.size());
+        return new DispatchDto.GenerateResult(date, dayType, dayType.getLabel(), created.size());
+    }
+
     // 검색 필터/등록 폼의 차량·운전자 선택 목록
     public DispatchDto.Options options() {
         List<DispatchDto.VehicleOption> vehicles = vehicleRepository.findAll(Sort.by("vehicleNo")).stream()
@@ -161,9 +209,14 @@ public class DispatchService {
 
     // ---------- 내부 도우미 ----------
 
-    // 검색 조건 조립: 검색어(배차번호/차량번호/운전자명), 배차일자, 차량, 운전자, 상태
+    // 취소 제외 조건 추가
+    private Specification<DispatchEntity> notCancelled(Specification<DispatchEntity> spec) {
+        return spec.and((root, query, cb) -> cb.notEqual(root.get("status"), DispatchStatus.CANCELLED));
+    }
+
+    // 검색 조건 조립: 검색어(배차번호/차량번호/운전자명/열번), 배차일자, 차량, 운전자, 상태, 입·출고 구분
     private Specification<DispatchEntity> spec(String keyword, LocalDate date, Long vehicleId,
-                                               String driver, DispatchStatus status) {
+                                               String driver, DispatchStatus status, MoveType moveType) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             Join<DispatchEntity, VehicleEntity> vehicle = root.join("vehicle");
@@ -173,7 +226,8 @@ public class DispatchService {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.<String>get("dispatchNo")), like, SearchUtil.ESCAPE),
                         cb.like(cb.lower(vehicle.<String>get("vehicleNo")), like, SearchUtil.ESCAPE),
-                        cb.like(cb.lower(root.<String>get("driverName")), like, SearchUtil.ESCAPE)
+                        cb.like(cb.lower(root.<String>get("driverName")), like, SearchUtil.ESCAPE),
+                        cb.like(cb.lower(cb.coalesce(root.<String>get("trainNo"), "")), like, SearchUtil.ESCAPE)
                 ));
             }
             if (date != null) {
@@ -187,6 +241,9 @@ public class DispatchService {
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (moveType != null) {
+                predicates.add(cb.equal(root.get("moveType"), moveType));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

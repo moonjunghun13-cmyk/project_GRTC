@@ -43,4 +43,19 @@ public interface DispatchRepository extends JpaRepository<DispatchEntity, Long>,
     // 배차 검색 필터의 운전자 선택 목록
     @Query("select distinct d.driverName from DispatchEntity d order by d.driverName")
     List<String> findDistinctDriverNames();
+
+    // ---- 입·출고 시간표 배차 ----
+
+    // 그 날짜에 시간표로 만든 배차가 있는지
+    boolean existsByDispatchDateAndMoveTypeIsNotNull(LocalDate dispatchDate);
+
+    // 시간표로 만든 배차가 하나라도 있는지 (초기 데이터 교체 판단용)
+    boolean existsByMoveTypeIsNotNull();
+
+    // 대시보드: 그 날짜의 입·출고 배차 (취소 제외), 시각 순
+    List<DispatchEntity> findAllByDispatchDateAndMoveTypeIsNotNullAndStatusNotOrderByDepartureTimeAsc(
+            LocalDate dispatchDate, DispatchStatus excluded);
+
+    // 예전 예시 배차(시간표 이전 초기 데이터) 정리용
+    List<DispatchEntity> findAllByMoveTypeIsNullAndDriverNameIn(List<String> driverNames);
 }

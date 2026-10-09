@@ -235,8 +235,10 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 | Method | URI | 설명 | 권한 |
 | --- | --- | --- | --- |
-| GET | /admin/dispatches | 배차 목록(keyword, date, vehicleId, driver, status 필터, 페이징) | 관리자 |
-| GET | /admin/dispatches/summary | 요약 카드(전체·완료·대기·변경·취소 건수). 목록과 같은 필터 사용(status 제외) | 관리자 |
+| GET | /admin/dispatches | 배차 목록(keyword(배차번호·열번·차량·운전자), date, vehicleId, driver, status, moveType(DEPART/RETURN) 필터, 페이징) | 관리자 |
+| GET | /admin/dispatches/summary | 요약 카드(전체·완료·대기·변경·취소 건수 + 출고(departs)·입고(returns) 건수, 취소 제외). 목록과 같은 필터 사용(status 제외) | 관리자 |
+| GET | /admin/dispatches/timetable | 입·출고 시간표(date=yyyy-MM-dd 또는 dayType=WEEKDAY/SATURDAY/HOLIDAY, 없으면 오늘) | 관리자 |
+| POST | /admin/dispatches/generate?date=yyyy-MM-dd | 그 날짜의 입·출고 시간표로 배차 생성(출고 1회·입고 1회 = 배차 1건). 이미 있으면 409 DISPATCH_ALREADY_GENERATED | 관리자 |
 | GET | /admin/dispatches/options | 차량·운전자 선택 목록 | 관리자 |
 | GET | /admin/dispatches/{dispatchId} | 배차 상세 | 관리자 |
 | POST | /admin/dispatches | 배차 등록(차량 상태·시간 중복 검증 후 저장) | 관리자 |
@@ -246,6 +248,12 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 - 등록 본문: dispatchDate, vehicleId, driverName, departureTime, arrivalTime, remark
 - 상태(status): COMPLETED(배차 완료), WAITING(배차 대기), CHANGED(배차 변경), CANCELLED(배차 취소)
+- 입·출고 시간표 배차: 원본은 팀 노션 참고자료의 `입출고_시간표.xlsx` (평일 출고·입고 각 50회, 토요일·휴일 각 41회). `resources/data/depot-timetable.csv` 로 넣어 두었고 서버 시작 시 `depot_timetable` 테이블에 한 번 불러온다.
+  - 배차 응답에 `moveType`(DEPART 출고/RETURN 입고), `trainNo`(열번), `dayType`(WEEKDAY/SATURDAY/HOLIDAY) 가 추가됐다. 입·출고 배차는 시각이 하나라서 `departureTime` = `arrivalTime` = 출고(입고) 시각이다.
+  - 직접 등록할 때 `moveType` + `trainNo` 를 보내면 입·출고 배차로 저장한다(`arrivalTime` 생략 가능). 보내지 않으면 기존과 같은 일반 배차(출발~도착).
+  - 휴일 = 일요일 + 공휴일(`KoreanHolidays`, 2026년 목록). 새벽 3시 전 시각(예: 0:05 입고)은 그날 운행의 마지막 열차로 본다.
+  - 시간표에는 차량·운전자가 없어서, 만든 배차의 차량·운전자는 예시 배정이다(출고: 가장 오래 대기한 운행중/대기 차량, 입고: 가장 먼저 나간 차량). 실제 배정은 수정 화면에서 바꾼다.
+  - 개발용 초기 데이터(app.seed.enabled=true): 시간표 배차가 없으면 오늘 기준 앞뒤 7일치를 만들고, 예전 예시 배차 10건은 지운다.
 - 같은 차량이 같은 날 겹치는 시간에 배차되면 `409 SCHEDULE_CONFLICT`, 정비·운행정지 차량이면 `409 TRAINSET_NOT_AVAILABLE` 입니다.
 - 목록 기본 정렬은 `dispatchDate,desc` 다음 `dispatchNo,asc` 입니다. 정렬 가능 필드: id, dispatchNo, dispatchDate, driverName, departureTime, arrivalTime, status, createdAt
 
@@ -259,7 +267,7 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 
 | Method | URI | 설명 | 권한 |
 | --- | --- | --- | --- |
-| GET | /admin/dashboard | 대시보드 전체(노선운영현황, 차량운행현황, 가동률, 민원건수, 답변건수) | 관리자 |
+| GET | /admin/dashboard | 대시보드 전체(노선운영현황, 차량운행현황, 가동률, 민원건수, 답변건수, 입·출고현황 `depot`: 오늘 운행일의 출고·입고 예정/완료 수, 운행 중 편성, 다음 출고·입고, 시간대별 횟수) | 관리자 |
 | GET | /admin/dashboard/periods | 기간 선택 목록 | 관리자 |
 
 - 민원건수·답변건수 카드의 기간은 `complainPeriod`, `answerPeriod` 로 각각 정합니다. 기본값은 `THIS_MONTH` 입니다.

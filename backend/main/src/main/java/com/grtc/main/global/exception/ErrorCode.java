@@ -76,6 +76,10 @@ public enum ErrorCode {
             "SCHEDULE_CONFLICT", "해당 편성은 같은 시간대에 이미 배정되어 있습니다."),
     DISPATCH_CANCELLED(HttpStatus.BAD_REQUEST,
             "DISPATCH_CANCELLED", "취소된 배차는 수정할 수 없습니다."),
+    DISPATCH_ALREADY_GENERATED(HttpStatus.CONFLICT,
+            "DISPATCH_ALREADY_GENERATED", "선택한 날짜에는 이미 시간표로 만든 입·출고 배차가 있습니다."),
+    TIMETABLE_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "RESOURCE_NOT_FOUND", "입·출고 시간표가 등록되어 있지 않습니다."),
 
     // ---------- 노선 / 운행 ----------
     ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND,
