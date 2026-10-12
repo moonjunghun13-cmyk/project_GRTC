@@ -31,10 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// 민원관리(관리자) 비즈니스 로직
-//  - 전체 민원 목록/검색, 상세, 답변 등록(처리상태 변경), 관리자 민원 등록, 첨부파일 다운로드
-//  - 민원인이 철회(사용자 화면의 '삭제')한 민원도 여기서는 그대로 보인다. (처리상태 필터 status=WITHDRAWN 으로 모아 볼 수 있다)
-//  - 일반 사용자의 민원 작성/수정/삭제는 main 서버가 담당한다.
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,7 +42,6 @@ public class AdminComplainService {
     private final AdminMemberService adminMemberService;
     private final FileService fileService;
 
-    // 민원관리 목록 (검색어: 제목/내용/민원인/민원번호, 분류·유형·처리상태 필터, 최신순)
     public PageResponse<AdminComplainDto.ListItem> list(Long adminId, AdminComplainDto.SearchCondition condition,
                                                    int page, int size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
@@ -54,18 +49,16 @@ public class AdminComplainService {
         return PageResponse.of(result, c -> AdminComplainDto.ListItem.from(c, adminId, false));
     }
 
-    // 민원 상세 (관리자는 모든 민원을 볼 수 있다)
     public AdminComplainDto.Detail get(Long adminId, Long id) {
         return toDetail(find(id), adminId);
     }
 
-    // 관리자 민원 등록 (민원관리 화면의 '+ 민원 등록', 민원인은 로그인한 관리자)
     @Transactional
     public AdminComplainDto.Detail create(Long adminId, AdminComplainDto.SaveRequest request, List<MultipartFile> files) {
         LoginEntity admin = adminMemberService.getActiveAdmin(adminId);
 
         ComplainEntity saved = complainRepository.save(ComplainEntity.builder()
-                .complainNo(complainNoGenerator.next()) // 사용자 등록과 같은 번호 체계를 함께 쓴다 (중복 없이 생성)
+                .complainNo(complainNoGenerator.next())
                 .type(request.type())
                 .category(request.category() != null ? request.category() : ComplainCategory.ETC)
                 .title(request.title().trim())
@@ -79,18 +72,15 @@ public class AdminComplainService {
         return toDetail(saved, adminId);
     }
 
-    // 답변 등록/수정: 처리상태(답변중/답변완료/이관안내)와 답변 내용을 함께 저장
     @Transactional
     public AdminComplainDto.Detail answer(Long adminId, Long id, AdminComplainDto.AnswerRequest request) {
         LoginEntity admin = adminMemberService.getActiveAdmin(adminId);
 
-        // 접수대기로 되돌리는 것은 답변이 아니므로 막는다. 철회는 민원인만 할 수 있는 처리라 역시 막는다.
         if (request.status() == ComplainStatus.WAITING || request.status() == ComplainStatus.WITHDRAWN) {
             throw new BusinessException(ErrorCode.INVALID_ANSWER_STATUS);
         }
 
         ComplainEntity complain = find(id);
-        // 철회된 민원에 답변하면 상태가 바뀌어 민원인 화면에 다시 나타나므로 막는다. (조회만 가능)
         if (complain.isWithdrawn()) {
             throw new BusinessException(ErrorCode.COMPLAIN_WITHDRAWN);
         }
@@ -99,7 +89,6 @@ public class AdminComplainService {
         return toDetail(complain, adminId);
     }
 
-    // 첨부파일 다운로드: 그 민원에 속한 파일만
     public Attachment getAttachmentForDownload(Long complainId, Long attachmentId) {
         find(complainId);
         Attachment attachment = fileService.getAttachment(attachmentId);
@@ -109,7 +98,6 @@ public class AdminComplainService {
         return attachment;
     }
 
-    // 검색 필터 / 답변 작성의 선택 목록
     public AdminComplainDto.Options options() {
         return new AdminComplainDto.Options(
                 Arrays.stream(ComplainType.values())
@@ -120,8 +108,6 @@ public class AdminComplainService {
                         .map(s -> new AdminComplainDto.LabelValue(s.name(), s.getLabel())).toList()
         );
     }
-
-    // ---------- 내부 도우미 ----------
 
     private Specification<ComplainEntity> spec(AdminComplainDto.SearchCondition condition) {
         return (root, query, cb) -> {
@@ -167,7 +153,6 @@ public class AdminComplainService {
                         c.getAnsweredAt(),
                         c.getAnsweredBy() == null ? null : c.getAnsweredBy().getName());
 
-        // 관리자 화면에서는 민원 내용 수정/삭제 대신 답변을 작성한다. (본인 글 + 접수대기일 때만 true)
         boolean editable = c.getWriter().getId().equals(viewerId)
                 && c.getStatus() == ComplainStatus.WAITING;
 

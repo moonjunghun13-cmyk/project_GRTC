@@ -17,8 +17,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// 민원 목록 정렬 확인: 가장 최근에 등록한 민원이 맨 위(1페이지 첫 줄)에 나와야 한다.
-//  - 실제 DB 에 넣어 보고 테스트가 끝나면 전부 롤백한다. (데이터가 남지 않는다)
 @SpringBootTest
 @Transactional
 class ComplainListOrderTest {
@@ -46,13 +44,11 @@ class ComplainListOrderTest {
         em.flush();
         em.clear();
 
-        // 사용자 목록: 나중에 쓴 글이 먼저
         List<Long> userOrder = complainService
                 .listForUser(user.getId(), new ComplainDto.SearchCondition(TITLE, null, null, null), 1, 10)
                 .content().stream().map(ComplainDto.ListItem::id).toList();
         assertThat(userOrder).containsExactly(third, second, first);
 
-        // 관리자 목록도 같은 순서
         List<Long> adminOrder = adminComplainService
                 .list(user.getId(), new AdminComplainDto.SearchCondition(TITLE, null, null, null), 1, 10)
                 .content().stream().map(AdminComplainDto.ListItem::id).toList();

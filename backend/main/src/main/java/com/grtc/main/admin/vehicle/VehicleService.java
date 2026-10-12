@@ -21,14 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-// 차량관리(조회/검색/등록/수정/삭제) 비즈니스 로직
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class VehicleService {
 
-    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 차량번호 순
     public static final Sort DEFAULT_SORT = Sort.by("vehicleNo");
     public static final Set<String> SORTABLE = Set.of("id", "vehicleNo", "status", "lastInspectionDate");
 
@@ -36,7 +34,6 @@ public class VehicleService {
     private final DispatchRepository dispatchRepository;
     private final OperationRepository operationRepository;
 
-    // 차량 목록: 차량번호 검색 + 상태 필터 + 페이징
     public PageResponse<VehicleDto.Response> list(String keyword, VehicleStatus status, Pageable pageable) {
         Specification<VehicleEntity> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -54,7 +51,6 @@ public class VehicleService {
         return PageResponse.from(result, VehicleDto.Response::from);
     }
 
-    // 상태별 차량 수 (차량관리 요약 카드, 대시보드 차량운행현황/가동률에서 같이 사용)
     public VehicleDto.Summary summary() {
         long total = vehicleRepository.count();
         long running = vehicleRepository.countByStatus(VehicleStatus.RUNNING);
@@ -65,12 +61,10 @@ public class VehicleService {
         return new VehicleDto.Summary(total, running, standby, maintenance, stopped, rate);
     }
 
-    // 차량 상세보기
     public VehicleDto.Response get(Long id) {
         return VehicleDto.Response.from(find(id));
     }
 
-    // 차량 등록
     @Transactional
     public VehicleDto.Response create(VehicleDto.Request request) {
         String vehicleNo = request.vehicleNo().trim();
@@ -86,7 +80,6 @@ public class VehicleService {
         return VehicleDto.Response.from(saved);
     }
 
-    // 차량 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
     @Transactional
     public VehicleDto.Response update(Long id, VehicleDto.UpdateRequest request) {
         VehicleEntity vehicle = find(id);
@@ -105,7 +98,6 @@ public class VehicleService {
         return VehicleDto.Response.from(vehicle);
     }
 
-    // 차량 삭제 (배차/운행 이력이 있으면 막는다)
     @Transactional
     public void delete(Long id) {
         VehicleEntity vehicle = find(id);

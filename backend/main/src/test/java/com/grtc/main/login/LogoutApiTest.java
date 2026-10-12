@@ -21,8 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// 로그아웃 API 확인: Access 토큰이 없거나 못 쓰게 된 상태에서도 로그아웃이 서버에서 처리되어야 한다.
-//  - 실제 보안 설정(SecurityConfig)을 그대로 거친다. 테스트가 끝나면 전부 롤백한다.
 @SpringBootTest
 @Transactional
 class LogoutApiTest {
@@ -43,7 +41,6 @@ class LogoutApiTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
     }
 
-    // 로그인해서 Refresh 토큰 쿠키를 받아 온다.
     private Cookie loginAndGetRefreshCookie() throws Exception {
         String loginId = "lgo" + System.nanoTime() % 1_000_000_000L;
         loginRepository.save(LoginEntity.builder()
@@ -63,7 +60,6 @@ class LogoutApiTest {
         mockMvc.perform(post("/api/v1/auth/logout")).andExpect(status().isOk());
     }
 
-    // 예전에는 여기서 로그아웃이 401 로 막혀 Refresh 토큰이 남았고, 로그아웃한 뒤에도 재발급이 됐다.
     @Test
     void Access_토큰을_못_쓰는_상태에서_로그아웃해도_재발급이_막힌다() throws Exception {
         Cookie refresh = loginAndGetRefreshCookie();

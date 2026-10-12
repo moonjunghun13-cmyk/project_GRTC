@@ -10,7 +10,6 @@ public final class DashboardDto {
     private DashboardDto() {
     }
 
-    // 차트 막대/진행바 한 줄 (code 는 enum 이름, label 은 화면 표시용)
     public record CountItem(String code, String label, long count) {
     }
 
@@ -37,8 +36,6 @@ public final class DashboardDto {
     ) {
     }
 
-    // 답변건수 카드 (총 N건 + 처리상태별 진행바: 접수대기/답변중/답변완료/이관안내/철회)
-    //  - 철회(WITHDRAWN) 항목의 count 가 기간 안에 접수됐다가 민원인이 철회한 건수다.
     public record AnswerCountCard(
             String period,
             String periodLabel,
@@ -49,11 +46,11 @@ public final class DashboardDto {
 
     // 대시보드 화면 전체
     public record Response(
-            OperationDto.RouteInfo route,        // 노선운영현황 (노선 정보가 아직 없으면 null)
-            VehicleStatusCard vehicles,          // 차량운행현황
-            OperationRateCard operationRate,     // 가동률
-            ComplainCountCard complaints,        // 민원건수
-            AnswerCountCard answers              // 답변건수
+            OperationDto.RouteInfo route,
+            VehicleStatusCard vehicles,
+            OperationRateCard operationRate,
+            ComplainCountCard complaints,
+            AnswerCountCard answers
     ) {
     }
 

@@ -6,8 +6,6 @@ import com.grtc.main.global.exception.ErrorResponse;
 import java.util.List;
 
 // 명세서 3-1 공통 응답 형식
-//   성공: { "success": true,  "data": { ... }, "error": null }
-//   실패: { "success": false, "data": null,    "error": { "code", "message", "details" } }
 public record ApiResponse<T>(boolean success, T data, ErrorResponse error) {
 
     // 성공 응답 (data 있음)
@@ -20,7 +18,6 @@ public record ApiResponse<T>(boolean success, T data, ErrorResponse error) {
         return new ApiResponse<>(true, null, null);
     }
 
-    // 실패 응답 (ErrorCode 의 code / message 를 그대로 사용)
     public static ApiResponse<Void> fail(ErrorCode errorCode) {
         return fail(errorCode.getCode(), errorCode.getMessage(), List.of());
     }

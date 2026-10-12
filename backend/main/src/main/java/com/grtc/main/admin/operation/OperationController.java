@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 // 운행관리 API (명세서 3-3 ⑤ 운행) - 권한: 관리자
-//   Base URL: /api/v1
 @RestController
 @RequestMapping("/api/v1/admin/operations")
 @RequiredArgsConstructor

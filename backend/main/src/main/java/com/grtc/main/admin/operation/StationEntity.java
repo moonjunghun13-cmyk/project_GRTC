@@ -3,7 +3,6 @@ package com.grtc.main.admin.operation;
 import jakarta.persistence.*;
 import lombok.*;
 
-// 노선에 속한 역. seq 는 노선 안에서의 순서(1번이 평동, 마지막이 녹동)
 @Entity
 @Table(name = "station",
         uniqueConstraints = @UniqueConstraint(columnNames = {"route_id", "seq"}))

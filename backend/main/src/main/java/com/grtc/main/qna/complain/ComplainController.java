@@ -29,8 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 // 민원관리(사용자) API - 로그인한 회원이면 누구나 호출 가능
-//   목록(민원관리) / 글쓰기(민원 양식) / 글확인(민원 상세) / 수정 / 삭제 / 첨부파일 다운로드
-//   ※ 관리자 답변·전체 관리는 dashboard 서버의 /api/admin/complaints 에 있다.
 @RestController
 @RequestMapping("/api/complaints")
 @RequiredArgsConstructor
@@ -39,7 +37,6 @@ public class ComplainController {
     private final ComplainService complainService;
     private final FileService fileService;
 
-    // 민원관리 목록 (검색어: 제목/내용/민원인/민원번호, 분류·유형·처리상태 필터, page 는 1부터)
     @GetMapping
     public PageResponse<ComplainDto.ListItem> list(
             @AuthenticationPrincipal Long userId,
@@ -66,7 +63,6 @@ public class ComplainController {
         return complainService.get(userId, id);
     }
 
-    // 민원 등록 (multipart/form-data: type, category, title, content, files)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ComplainDto.Detail> create(
             @AuthenticationPrincipal Long userId,
@@ -76,7 +72,6 @@ public class ComplainController {
         return ResponseEntity.status(HttpStatus.CREATED).body(complainService.create(userId, request, files));
     }
 
-    // 민원 수정 (본인 + 접수대기 상태만, deleteFileIds 로 기존 첨부 삭제, files 로 새 첨부 추가)
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ComplainDto.Detail update(
             @AuthenticationPrincipal Long userId,

@@ -32,8 +32,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
-// 배차 삭제 확인 (실제 DB 에 넣어 보고 테스트가 끝나면 전부 롤백한다)
-//  - 다른 배차와 섞이지 않게 먼 미래 날짜(2099-03-01)와 테스트용 차량을 쓴다.
 @SpringBootTest
 @Transactional
 class DispatchDeleteTest {
@@ -63,7 +61,6 @@ class DispatchDeleteTest {
                 .vehicleNo("TST-" + System.nanoTime() % 1_000_000_000L).status(VehicleStatus.STANDBY).build());
     }
 
-    // hour 시 정각 ~ 30분 배차를 하나 등록한다.
     private DispatchDto.Response create(int hour) {
         return dispatchService.create(new DispatchDto.Request(DATE, vehicle.getId(), "삭제테스트",
                 LocalTime.of(hour, 0), LocalTime.of(hour, 30), null, null));
@@ -136,7 +133,6 @@ class DispatchDeleteTest {
         assertThat(create(6).id()).isNotNull();
     }
 
-    // 예전 방식(그날 배차 수 + 1)이었다면 여기서 이미 있는 번호를 다시 만들어 등록이 실패한다.
     @Test
     void 중간_배차를_삭제한_뒤_등록해도_배차번호가_겹치지_않는다() {
         create(6);
@@ -147,13 +143,11 @@ class DispatchDeleteTest {
         flushAndClear();
 
         DispatchDto.Response next = create(9);
-        em.flush(); // DB 의 중복 금지 제약까지 통과하는지 확인
+        em.flush();
 
         assertThat(next.dispatchNo()).isNotEqualTo(third.dispatchNo());
         assertThat(sequenceOf(next.dispatchNo())).isEqualTo(sequenceOf(third.dispatchNo()) + 1);
     }
-
-    // ---------- API 와 권한 (실제 보안 설정을 그대로 거친다) ----------
 
     private String tokenOf(AdminType type) {
         LoginEntity member = loginRepository.save(LoginEntity.builder()
@@ -180,17 +174,24 @@ class DispatchDeleteTest {
         flushAndClear();
         assertThat(dispatchRepository.findById(id)).isEmpty();
 
-        // 이미 지운 배차를 다시 지우면 404
         assertThat(deleteStatus(id, tokenOf(AdminType.SYSTEM_ADMIN))).isEqualTo(404);
     }
 
-    // 배차관리는 시스템 관리자만 볼 수 있는 페이지다.
+    @Test
+    void 차량_담당자는_API로_배차를_삭제할_수_있다() throws Exception {
+        Long id = create(6).id();
+        flushAndClear();
+
+        assertThat(deleteStatus(id, tokenOf(AdminType.VEHICLE_MANAGER))).isEqualTo(200);
+        flushAndClear();
+        assertThat(dispatchRepository.findById(id)).isEmpty();
+    }
+
     @Test
     void 배차관리를_볼_수_없는_관리자와_비로그인은_삭제할_수_없다() throws Exception {
         Long id = create(6).id();
         flushAndClear();
 
-        assertThat(deleteStatus(id, tokenOf(AdminType.VEHICLE_MANAGER))).isEqualTo(403);
         assertThat(deleteStatus(id, tokenOf(AdminType.COMPLAINT_MANAGER))).isEqualTo(403);
         assertThat(deleteStatus(id, tokenOf(AdminType.DEPARTMENT_HEAD))).isEqualTo(403);
         assertThat(deleteStatus(id, null)).isEqualTo(401);

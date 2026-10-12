@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-// 차량(편성) 정보 엔티티
 @Entity
 @Table(name = "vehicle")
 @Getter
@@ -18,7 +17,6 @@ public class VehicleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 차량번호(편성 이름). 예: 101편성
     @Column(name = "vehicle_no", nullable = false, unique = true, length = 30)
     private String vehicleNo;
 
@@ -26,7 +24,6 @@ public class VehicleEntity {
     @Column(nullable = false, length = 20)
     private VehicleStatus status;
 
-    // 최근 점검일
     @Column(name = "last_inspection_date")
     private LocalDate lastInspectionDate;
 

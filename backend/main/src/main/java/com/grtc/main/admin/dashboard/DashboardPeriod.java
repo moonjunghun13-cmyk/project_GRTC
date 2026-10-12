@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 
-// 대시보드 민원건수/답변건수 카드의 기간 선택 (기본: 이번 달)
 @Getter
 @RequiredArgsConstructor
 public enum DashboardPeriod {
@@ -20,7 +19,6 @@ public enum DashboardPeriod {
 
     private final String label;
 
-    // 이 기간의 시작 시각 (이 시각 이후에 접수된 민원을 센다)
     public LocalDateTime from(LocalDate today) {
         return switch (this) {
             case TODAY -> today.atStartOfDay();

@@ -23,26 +23,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-// 회원관리(조회/검색/수정/상태·권한 변경) 비즈니스 로직
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminMemberManageService {
 
-    // 회원정보 화면의 선택 목록 (필요하면 여기만 수정하면 된다)
-    //  - 광주교통공사 임직원 세부사항의 "2. 부서"(사용자가 속한 부서), "1. 직급"(높은 순)과 같은 값이다.
     public static final List<String> DEPARTMENTS = List.of("고객사업처", "차량운영처", "고객만족팀", "차량팀", "IT전략팀");
     public static final List<String> POSITIONS = List.of("처장", "팀장", "부장", "차장", "과장", "대리", "주임");
 
-    // 목록 정렬: sort 를 보내지 않으면 화면과 같이 가입 순서대로
     public static final Sort DEFAULT_SORT = Sort.by("id");
     public static final Set<String> SORTABLE =
             Set.of("id", "name", "loginId", "email", "role", "status", "createdAt");
 
     private final LoginRepository memberRepository;
 
-    // 회원관리 목록: 이름/아이디/이메일 검색 + 권한/상태 필터 + 페이징
     public PageResponse<AdminMemberDto.ListItem> list(String keyword, Role role, MemberStatus status, Pageable pageable) {
         Specification<LoginEntity> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -75,12 +70,10 @@ public class AdminMemberManageService {
         return PageResponse.from(result, items);
     }
 
-    // 회원 상세 조회
     public AdminMemberDto.Detail get(Long id) {
         return AdminMemberDto.Detail.from(find(id));
     }
 
-    // 회원정보 수정 (PATCH: 요청에 들어 있는 항목만 바꾼다)
     @Transactional
     public AdminMemberDto.Detail update(Long id, AdminMemberDto.UpdateRequest request) {
         LoginEntity member = find(id);
@@ -106,7 +99,6 @@ public class AdminMemberManageService {
         return AdminMemberDto.Detail.from(member);
     }
 
-    // 회원 상태 변경 (정상 / 이용정지 / 탈퇴) - 본인 계정은 막는다(관리자가 스스로 잠기는 것 방지)
     @Transactional
     public AdminMemberDto.Detail changeStatus(Long adminId, Long id, MemberStatus status) {
         if (adminId.equals(id)) {
@@ -118,7 +110,6 @@ public class AdminMemberManageService {
         return AdminMemberDto.Detail.from(member);
     }
 
-    // 회원 권한 변경 (관리자 / 일반회원) - 본인 계정은 막는다
     @Transactional
     public AdminMemberDto.Detail changeRole(Long adminId, Long id, Role role) {
         if (adminId.equals(id)) {
@@ -130,7 +121,6 @@ public class AdminMemberManageService {
         return AdminMemberDto.Detail.from(member);
     }
 
-    // 소속 부서 / 직급 선택 목록
     public AdminMemberDto.Options options() {
         return new AdminMemberDto.Options(DEPARTMENTS, POSITIONS);
     }
@@ -140,7 +130,6 @@ public class AdminMemberManageService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
-    // 빈 문자열은 null 로 저장 (이메일처럼 unique 컬럼에 "" 가 중복 저장되는 것도 방지)
     private String blankToNull(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
     }

@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-// 운행관리(노선도 + 운행 중인 열차 위치) 조회 로직
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -18,7 +17,6 @@ public class OperationService {
     private final StationRepository stationRepository;
     private final OperationRepository operationRepository;
 
-    // 운행관리 화면: 노선 정보 + 역 목록 + 운행 중인 열차(현재 역, 방향, 다음 역)
     public OperationDto.MapResponse map() {
         RouteEntity route = findRoute();
         List<StationEntity> stations = stationRepository.findAllByRouteIdOrderBySeqAsc(route.getId());
@@ -33,7 +31,6 @@ public class OperationService {
         return new OperationDto.MapResponse(toRouteInfo(route, stations), stationInfos, trains);
     }
 
-    // 노선 요약 (대시보드 노선운영현황에서도 사용)
     public OperationDto.RouteInfo routeInfo() {
         RouteEntity route = findRoute();
         return toRouteInfo(route, stationRepository.findAllByRouteIdOrderBySeqAsc(route.getId()));
@@ -52,7 +49,6 @@ public class OperationService {
         );
     }
 
-    // 열차 한 대를 응답으로 변환: 종착역 쪽으로 한 정거장 이동한 역이 '다음 역'
     private OperationDto.TrainInfo toTrain(OperationEntity op, List<StationEntity> stations) {
         int currentIdx = indexOfId(stations, op.getCurrentStation().getId());
         int terminalIdx = indexOfName(stations, op.getDirection().getTerminalName());

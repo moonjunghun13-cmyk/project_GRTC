@@ -23,8 +23,6 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class MemberService {
 
-    // 회원정보 화면의 선택 목록 (dashboard 서버의 MemberService 와 같은 값으로 맞춘다)
-    //  - 광주교통공사 임직원 세부사항의 "2. 부서"(사용자가 속한 부서), "1. 직급"(높은 순)과 같은 값이다.
     public static final List<String> DEPARTMENTS = List.of("고객사업처", "차량운영처", "고객만족팀", "차량팀", "IT전략팀");
     public static final List<String> POSITIONS = List.of("처장", "팀장", "부장", "차장", "과장", "대리", "주임");
 
@@ -65,7 +63,6 @@ public class MemberService {
         return MemberDto.Detail.from(member);
     }
 
-    // 프로필 이미지 변경: 새 이미지와 썸네일을 저장하고, 예전 파일은 지운다.
     @Transactional
     public MemberDto.ProfileImage changeProfileImage(Long id, MultipartFile file) {
         LoginEntity member = loginService.getActiveMember(id);
@@ -83,7 +80,6 @@ public class MemberService {
     }
 
     // 비밀번호 변경: 현재 비밀번호를 확인한 뒤 새 비밀번호로 바꾼다.
-    //  - 바꾼 뒤에는 발급돼 있던 Refresh 토큰을 모두 지운다. (다른 기기 포함, 다시 로그인해야 한다)
     @Transactional
     public void changePassword(Long id, MemberDto.PasswordRequest request) {
         LoginEntity member = loginService.getActiveMember(id);
@@ -105,7 +101,6 @@ public class MemberService {
         return new MemberDto.Options(DEPARTMENTS, POSITIONS);
     }
 
-    // 빈 문자열은 null 로 저장 (이메일처럼 unique 컬럼에 "" 가 중복 저장되는 것도 방지)
     private String blankToNull(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
     }

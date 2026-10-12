@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Role {
-    ADMIN("관리자"), // 관리자: 로그인 시 대시보드로 이동
-    USER("일반회원"); // 일반 사용자: 로그인 시 민원 화면으로 이동
+    ADMIN("관리자"),
+    USER("일반회원");
 
-    private final String label; // 화면에 보여줄 이름
+    private final String label;
 }

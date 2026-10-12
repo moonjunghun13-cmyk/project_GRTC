@@ -12,17 +12,13 @@ import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-// 회원관리 / 회원정보 화면에서 쓰는 요청·응답 모음
 public final class AdminMemberDto {
 
-    // 프로필 이미지 주소 앞부분. 이미지는 main 서버(8081)가 내려준다. (GET /api/v1/files/profile/{파일명})
     private static final String PROFILE_URL_PREFIX = "/api/v1/files/profile/";
 
     private AdminMemberDto() {
     }
 
-    // 회원관리 목록 한 줄 (연락처는 010-****-1234 처럼 가려서 내려준다)
-    //   joinedAt: ISO-8601 (예: 2026-09-01T09:00:00+09:00)
     public record ListItem(
             int no,
             Long id,
@@ -57,8 +53,6 @@ public final class AdminMemberDto {
         }
     }
 
-    // 회원정보(상세) 화면 (관리자 화면이므로 연락처 전체 표시)
-    //   profileImageUrl / profileThumbnailUrl: main 서버 기준 경로, 없으면 null
     public record Detail(
             Long id,
             String name,
@@ -95,9 +89,6 @@ public final class AdminMemberDto {
         }
     }
 
-    // 회원정보 수정 요청 (PATCH: 보낸 항목만 바뀐다. 보내지 않은 항목(null)은 그대로 둔다)
-    //   - name, email 은 보낼 경우 비워둘 수 없다.
-    //   - phone, department, position 은 빈 문자열("")로 보내면 값이 지워진다.
     public record UpdateRequest(
             @Pattern(regexp = "(?s).*\\S.*", message = "필수 입력란입니다.")
             @Size(max = 30, message = "이름은 최대 30자까지 입력 가능합니다.")
@@ -120,23 +111,19 @@ public final class AdminMemberDto {
     ) {
     }
 
-    // 회원 상태 변경 요청 (정상 / 이용정지 / 탈퇴)
     public record StatusRequest(
             @NotNull(message = "필수 선택 항목입니다.") MemberStatus status
     ) {
     }
 
-    // 회원 권한 변경 요청 (관리자 / 일반회원)
     public record RoleRequest(
             @NotNull(message = "필수 선택 항목입니다.") Role role
     ) {
     }
 
-    // 소속 부서 / 직급 선택 목록
     public record Options(List<String> departments, List<String> positions) {
     }
 
-    // 연락처 가리기: 010-1234-5678 -> 010-****-5678
     static String maskPhone(String phone) {
         if (phone == null || phone.isBlank()) {
             return phone;
@@ -144,11 +131,9 @@ public final class AdminMemberDto {
         if (phone.matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
             return phone.replaceAll("^(\\d{2,3})-\\d{3,4}-(\\d{4})$", "$1-****-$2");
         }
-        // 예상 못한 형식이면 뒤 4자리만 남기고 가린다.
         return phone.length() > 4 ? "****" + phone.substring(phone.length() - 4) : "****";
     }
 
-    // 저장 파일명 -> 프론트에 내려줄 주소 (없으면 null)
     private static String profileUrl(String storedName) {
         return (storedName == null || storedName.isBlank()) ? null : PROFILE_URL_PREFIX + storedName;
     }

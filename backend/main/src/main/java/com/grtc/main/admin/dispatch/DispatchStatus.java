@@ -3,7 +3,6 @@ package com.grtc.main.admin.dispatch;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-// 배차 상태 (배차관리 화면의 배차 완료 / 대기 / 변경 / 취소)
 @Getter
 @RequiredArgsConstructor
 public enum DispatchStatus {

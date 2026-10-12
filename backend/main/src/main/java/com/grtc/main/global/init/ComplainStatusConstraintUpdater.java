@@ -13,11 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// complain.status 의 CHECK 제약을 ComplainStatus enum 과 맞춘다. (서버 시작 때 한 번, 이미 맞으면 아무것도 안 함)
-//  - Hibernate 는 테이블을 처음 만들 때 enum 값 목록으로 CHECK 제약(complain_status_check)을 건다.
-//  - 하지만 ddl-auto: update 는 나중에 enum 값이 늘어나도 이 제약을 고쳐 주지 않는다.
-//    그래서 예전에 만들어진 DB 에서는 새 상태(예: WITHDRAWN 철회)를 저장할 때 제약 위반으로 실패한다.
-//  - 팀원마다 DB 를 따로 쓰므로, 각자 SQL 을 돌리지 않아도 되게 여기서 자동으로 고친다.
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -45,7 +40,6 @@ public class ComplainStatusConstraintUpdater implements ApplicationRunner {
             if (upToDate) {
                 return;
             }
-            // 지우고 다시 거는 것을 한 문장으로 처리한다. (중간에 실패해도 제약이 사라진 채로 남지 않는다)
             jdbcTemplate.execute("alter table complain "
                     + "drop constraint complain_status_check, "
                     + "add constraint complain_status_check check (status in (" + allowed + "))");

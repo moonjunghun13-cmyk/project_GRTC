@@ -30,9 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// 개발용 초기 데이터 (app.seed.enabled=true 일 때만, 테이블이 비어 있을 때 한 번만 넣는다)
-//  - 노선(광주 도시철도 1호선) + 역 20개, 차량 32편성, 운행 중인 열차 위치, 오늘 배차
-//  - 운영 서버에서는 app.seed.enabled 를 false 로 두면 된다.
 @Slf4j
 @Component
 @RequiredArgsConstructor

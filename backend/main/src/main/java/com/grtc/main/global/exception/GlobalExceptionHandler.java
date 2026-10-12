@@ -20,12 +20,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // 모든 오류를 명세서 3-1 의 실패 응답 형식으로 내려준다.
-//   { "success": false, "data": null, "error": { "code", "message", "details" } }
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler{
 
-    // 서비스에서 던진 업무 오류 (ErrorCode 의 HTTP 상태 / code / message 그대로)
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException e){
         ErrorCode errorCode = e.getErrorCode();
@@ -35,19 +33,16 @@ public class GlobalExceptionHandler{
                 .body(ApiResponse.fail(errorCode));
     }
 
-    // JSON 본문(@RequestBody) 검증 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e){
         return invalidInput(e.getBindingResult());
     }
 
-    // multipart 폼(@ModelAttribute) 검증 실패도 같은 형식으로 응답
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ApiResponse<Void>> handleBind(BindException e){
         return invalidInput(e.getBindingResult());
     }
 
-    // JSON 형식이 잘못됐거나 날짜/enum 값을 읽지 못할 때
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException e){
         return ResponseEntity
@@ -55,7 +50,6 @@ public class GlobalExceptionHandler{
                 .body(ApiResponse.fail(ErrorCode.INVALID_INPUT.getCode(), "요청 형식이 올바르지 않습니다.", List.of()));
     }
 
-    // ?status=ABC 처럼 쿼리 파라미터를 enum/숫자로 바꾸지 못할 때
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e){
         String message = ErrorCode.INVALID_PARAMETER.getMessage();
@@ -65,7 +59,6 @@ public class GlobalExceptionHandler{
                         List.of(new ErrorResponse.Detail(e.getName(), message))));
     }
 
-    // 필수 쿼리 파라미터가 빠졌을 때
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParameter(MissingServletRequestParameterException e){
         String message = "필수 값입니다.";
@@ -75,7 +68,6 @@ public class GlobalExceptionHandler{
                         List.of(new ErrorResponse.Detail(e.getParameterName(), message))));
     }
 
-    // 파일 크기가 spring.servlet.multipart.max-file-size 를 넘으면 컨트롤러에 오기 전에 발생 (413)
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handleMaxUpload(MaxUploadSizeExceededException e){
         return ResponseEntity
@@ -84,11 +76,8 @@ public class GlobalExceptionHandler{
     }
 
     // 그 밖의 모든 오류
-    //   - 스프링이 상태 코드를 정해 둔 오류(없는 주소 404, 허용되지 않은 메서드 405 등)는 그 상태 코드로,
-    //   - 나머지는 500 INTERNAL_ERROR 로 내려준다.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleOthers(Exception e) throws Exception {
-        // 인증/권한 오류는 스프링 시큐리티(SecurityConfig 의 401/403 처리)가 응답하도록 그대로 넘긴다.
         if (e instanceof AccessDeniedException || e instanceof AuthenticationException) {
             throw e;
         }
@@ -104,7 +93,6 @@ public class GlobalExceptionHandler{
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR));
     }
 
-    // 검증 실패 공통 응답: message 는 한 줄 요약, details 는 항목별 내용
     private ResponseEntity<ApiResponse<Void>> invalidInput(BindingResult bindingResult) {
         List<ErrorResponse.Detail> details = bindingResult.getFieldErrors().stream()
                 .map(error -> new ErrorResponse.Detail(error.getField(), error.getDefaultMessage()))

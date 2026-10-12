@@ -20,9 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// 민원 삭제 = 철회 처리 확인
-//  - 민원인에게는 삭제된 것처럼 안 보이고, 관리자에게는 '철회' 상태로 남아야 한다.
-//  - 실제 DB 에 넣어 보고(제약 조건 확인) 테스트가 끝나면 전부 롤백한다. (데이터가 남지 않는다)
 @SpringBootTest
 @Transactional
 class ComplainWithdrawTest {
@@ -65,7 +62,6 @@ class ComplainWithdrawTest {
         return complainService.create(user.getId(), saveRequest(TITLE, CONTENT), null).id();
     }
 
-    // 삭제한 뒤 DB 에 반영(flush)하고 캐시를 비워서, 이후 조회가 실제 DB 값을 읽게 한다.
     private Long createAndWithdraw() {
         Long id = createComplain();
         complainService.delete(user.getId(), id);
@@ -107,19 +103,16 @@ class ComplainWithdrawTest {
     void 민원인에게는_삭제된_민원처럼_보이지_않는다() {
         Long id = createAndWithdraw();
 
-        // 목록: 본인에게도, 다른 회원에게도 안 나온다
         assertThat(complainService.listForUser(user.getId(), byTitle(), 1, 50).content())
                 .noneMatch(item -> item.id().equals(id));
         assertThat(complainService.listForUser(other.getId(), byTitle(), 1, 50).content())
                 .noneMatch(item -> item.id().equals(id));
 
-        // 상세 / 수정 / 다시 삭제: 모두 '없는 민원'
         assertError(() -> complainService.get(user.getId(), id), ErrorCode.COMPLAIN_NOT_FOUND);
         assertError(() -> complainService.update(user.getId(), id, saveRequest("다시", "다시"), null),
                 ErrorCode.COMPLAIN_NOT_FOUND);
         assertError(() -> complainService.delete(user.getId(), id), ErrorCode.COMPLAIN_NOT_FOUND);
 
-        // 사용자 화면의 처리상태 선택 목록에도 '철회'는 없다
         assertThat(complainService.options().statuses())
                 .noneMatch(s -> s.code().equals(ComplainStatus.WITHDRAWN.name()));
     }
@@ -134,12 +127,10 @@ class ComplainWithdrawTest {
         assertThat(detail.withdrawnAt()).isNotNull();
         assertThat(detail.content()).isEqualTo(CONTENT);
 
-        // 처리상태 필터 status=WITHDRAWN 으로 모아 볼 수 있다
         var withdrawnOnly = adminComplainService.list(admin.getId(),
                 new AdminComplainDto.SearchCondition(TITLE, null, null, ComplainStatus.WITHDRAWN), 1, 50);
         assertThat(withdrawnOnly.content()).anyMatch(item -> item.id().equals(id) && item.withdrawnAt() != null);
 
-        // 관리자 화면의 처리상태 선택 목록에는 '철회'가 있다
         assertThat(adminComplainService.options().statuses())
                 .anyMatch(s -> s.code().equals(ComplainStatus.WITHDRAWN.name()));
     }
@@ -164,7 +155,6 @@ class ComplainWithdrawTest {
     void 남의_민원은_삭제할_수_없다() {
         Long id = createComplain();
 
-        // 일반 사용자에게 남의 민원은 '없는 민원'이다
         assertError(() -> complainService.delete(other.getId(), id), ErrorCode.COMPLAIN_NOT_FOUND);
         assertThat(complainRepository.findById(id).orElseThrow().getStatus()).isEqualTo(ComplainStatus.WAITING);
     }

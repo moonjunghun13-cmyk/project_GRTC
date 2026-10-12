@@ -8,8 +8,8 @@
 
 | 구분 | 패키지 | 주소 | 담당 |
 | --- | --- | --- | --- |
-| 공통·일반 사용자 | `com.grtc.main.login`, `member`, `qna` | `/api/v1/auth/**`, `/api/v1/members/**`, `/api/complaints/**` | 회원가입, 로그인, 토큰, 내 정보, 민원 작성·조회 |
-| 관리자 | `com.grtc.main.admin.*` | `/api/v1/admin/**`, `/api/admin/complaints/**` | 대시보드, 차량, 배차, 운행, 민원 처리, 회원 관리 |
+| 공통·일반 사용자 | `com.grtc.main.login`, `member`, `qna`, `notice`, `archive` | `/api/v1/auth/**`, `/api/v1/members/**`, `/api/complaints/**`, `/api/v1/notices/**`, `/api/v1/archives/**` | 회원가입, 로그인, 토큰, 내 정보, 민원 작성·조회, 공지사항·자료실 조회 |
+| 관리자 | `com.grtc.main.admin.*` | `/api/v1/admin/**`, `/api/admin/complaints/**` | 대시보드, 차량, 배차, 운행, 민원 처리, 회원 관리, 공지관리, 자료실관리 |
 
 - 로그인으로 받은 Access 토큰 하나로 모든 API 를 호출합니다.
 - 관리자 API 는 `ADMIN` 권한 확인 + `AdminAccessFilter`(DB 의 최신 권한·상태 재확인)로 이중 확인합니다.
@@ -159,24 +159,24 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
 | adminType | 이름 | 열람 가능 페이지 |
 | --- | --- | --- |
 | SYSTEM_ADMIN | 시스템 관리자 | 모든 페이지 |
-| DEPARTMENT_HEAD | 부서장 | 대시보드 |
-| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리 |
-| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리 |
+| DEPARTMENT_HEAD | 부서장 | 대시보드, 공지관리, 자료실관리 |
+| COMPLAINT_MANAGER | 민원 담당자 | 대시보드, 민원관리, 공지관리, 자료실관리 |
+| VEHICLE_MANAGER | 차량 담당자 | 대시보드, 차량관리, 배차관리, 공지관리, 자료실관리 |
 
-개발용 관리자 계정 8개 (광주교통공사 임직원 세부사항 "3. 사용자별 부서/직급 분배"):
+개발용 관리자 계정 6개 (광주교통공사 임직원 세부사항 "3. 사용자별 부서/직급 분배"):
 
 | 아이디 | 관리자 유형 | 부서 | 직급 | 열람 가능 페이지 |
 | --- | --- | --- | --- | --- |
 | admin | 시스템 관리자 | IT전략팀 | 차장 | 모든 페이지 |
 | admin2 | 시스템 관리자 | IT전략팀 | 과장 | 모든 페이지 |
-| depthead | 부서장 | 고객사업처 | 처장 | 대시보드 |
-| depthead2 | 부서장 | 차량운영처 | 처장 | 대시보드 |
-| cmanager | 민원 담당자 | 고객만족팀 | 대리 | 대시보드, 민원관리 |
-| cmanager2 | 민원 담당자 | 고객만족팀 | 주임 | 대시보드, 민원관리 |
-| vmanager | 차량 담당자 | 차량팀 | 부장 | 대시보드, 차량관리 |
-| vmanager2 | 차량 담당자 | 차량팀 | 차장 | 대시보드, 차량관리 |
+| cmanager | 민원 담당자 | 고객만족팀 | 대리 | 대시보드, 민원관리, 공지관리, 자료실관리 |
+| cmanager2 | 민원 담당자 | 고객만족팀 | 주임 | 대시보드, 민원관리, 공지관리, 자료실관리 |
+| vmanager | 차량 담당자 | 차량팀 | 부장 | 대시보드, 차량관리, 배차관리, 공지관리, 자료실관리 |
+| vmanager2 | 차량 담당자 | 차량팀 | 차장 | 대시보드, 차량관리, 배차관리, 공지관리, 자료실관리 |
 
-- 페이지와 API 의 대응: 대시보드 `/admin/dashboard`, 차량관리 `/admin/vehicles`, 배차관리 `/admin/dispatches`, 운행관리 `/admin/operations`, 민원관리 `/api/admin/complaints`, 회원관리 `/admin/members`. 배차관리·운행관리·회원관리는 시스템 관리자만 볼 수 있습니다.
+- 페이지와 API 의 대응: 대시보드 `/admin/dashboard`, 차량관리 `/admin/vehicles`, 배차관리 `/admin/dispatches`, 운행관리 `/admin/operations`, 민원관리 `/api/admin/complaints`, 회원관리 `/admin/members`, 공지관리 `/admin/notices`, 자료실관리 `/admin/archives`.
+- 배차관리는 시스템 관리자와 차량 담당자, 운행관리·회원관리는 시스템 관리자만 볼 수 있습니다. 공지관리·자료실관리는 모든 관리자가 쓸 수 있습니다.
+- 메뉴(`pages`) 순서: 대시보드, 차량관리, 배차관리, 운행관리, 민원관리, 회원관리, 공지관리, 자료실관리
 - 볼 수 없는 페이지의 API 를 호출하면 `403 FORBIDDEN` 입니다. 내 정보(`/admin/me`)는 모든 관리자가 쓸 수 있습니다.
 - 프론트는 `pages` 에 있는 메뉴만 보여주면 됩니다. 주소를 직접 쳐서 들어가도 서버가 API 를 막습니다.
 - 개발용 계정의 비밀번호는 모두 `admin1234!` 입니다. `app.seed.enabled=true` 일 때 서버가 켜지면서 없는 계정만 자동으로 만듭니다. 이미 있는 계정은 비어 있는 관리자 유형·부서·직급만 채우고, 비밀번호나 직접 고친 값은 건드리지 않습니다.
@@ -346,4 +346,83 @@ URI 는 모두 Base URL(`/api/v1`) 뒤에 붙습니다. 예) `POST http://localh
   "category": "FACILITY",
   "categoryLabel": "시설물"
 }
+```
+
+#### ⑧ 공지사항 (Notice)
+
+조회는 로그인한 회원 누구나(일반회원·관리자), 등록·수정·삭제는 관리자만 할 수 있습니다. 일반회원이 관리자 API 를 호출하면 `403 FORBIDDEN` 입니다.
+
+**회원**
+
+| Method | URI | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | /notices | 공지 목록(keyword, 페이징) | 회원 |
+| GET | /notices/{noticeId} | 공지 상세. 볼 때마다 조회수 +1 | 회원 |
+
+**관리자 (공지관리)**
+
+| Method | URI | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | /admin/notices | 공지 목록(keyword, 페이징) | 관리자 |
+| GET | /admin/notices/{noticeId} | 공지 상세(조회수는 오르지 않음) | 관리자 |
+| POST | /admin/notices | 공지 등록(title, content, contentHtml, pinned) | 관리자 |
+| PATCH | /admin/notices/{noticeId} | 공지 수정(보낸 항목만 바뀜) | 관리자 |
+| DELETE | /admin/notices/{noticeId} | 공지 삭제(되돌릴 수 없음) | 관리자 |
+
+- 등록 본문: `title`(필수, 200자), `content`(필수, 10,000자), `contentHtml`(선택, 에디터 서식 — 민원과 같은 허용 태그만 남김), `pinned`(선택, 기본 `false`)
+- 수정에서 `contentHtml` 을 `""` 로 보내면 서식이 지워집니다. 보내지 않으면 그대로 둡니다.
+- 목록은 상단 고정(`pinned=true`) 공지가 항상 먼저 나오고, 그 안에서 기본 정렬은 최신순(`createdAt,desc`)입니다. 정렬 가능 필드: id, title, viewCount, createdAt
+- keyword 는 제목·내용에서 찾습니다.
+
+목록 한 줄 / 상세 응답의 `data`:
+
+```json
+{ "id": 3, "title": "추석 연휴 운행 안내", "pinned": true, "writerName": "관리자", "viewCount": 12,
+  "createdAt": "2026-10-12T16:30:00+09:00" }
+```
+
+```json
+{ "id": 3, "title": "추석 연휴 운행 안내", "content": "…", "contentHtml": "<p>…</p>", "pinned": true,
+  "writerName": "관리자", "viewCount": 12,
+  "createdAt": "2026-10-12T16:30:00+09:00", "updatedAt": null }
+```
+
+#### ⑨ 자료실 (Archive)
+
+조회·다운로드는 로그인한 회원 누구나, 등록·수정·삭제는 관리자만 할 수 있습니다.
+
+**회원**
+
+| Method | URI | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | /archives | 자료 목록(keyword, 페이징). 한 줄마다 첨부파일 개수(`fileCount`) 포함 | 회원 |
+| GET | /archives/{archiveId} | 자료 상세(첨부파일 목록 포함). 볼 때마다 조회수 +1 | 회원 |
+| GET | /archives/{archiveId}/files/{fileId} | 첨부파일 다운로드 | 회원 |
+
+**관리자 (자료실관리)**
+
+| Method | URI | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | /admin/archives | 자료 목록(keyword, 페이징) | 관리자 |
+| GET | /admin/archives/{archiveId} | 자료 상세(조회수는 오르지 않음) | 관리자 |
+| POST | /admin/archives | 자료 등록(multipart: title, content, contentHtml, files) | 관리자 |
+| PUT | /admin/archives/{archiveId} | 자료 수정(multipart: title, content, contentHtml, files, deleteFileIds) | 관리자 |
+| DELETE | /admin/archives/{archiveId} | 자료 삭제(첨부파일도 함께 삭제, 되돌릴 수 없음) | 관리자 |
+| GET | /admin/archives/{archiveId}/files/{fileId} | 첨부파일 다운로드 | 관리자 |
+
+- `title` 은 필수(200자), `content`(설명, 10,000자)와 `contentHtml` 은 선택입니다.
+- 수정(PUT)은 보낸 값으로 통째로 바뀝니다. 새 파일은 `files` 로 추가하고, 지울 파일은 `deleteFileIds` 로 보냅니다. 보내지 않은 기존 파일은 그대로 남습니다.
+- 첨부파일 규칙은 민원과 같습니다: jpg, png, gif, pdf 만 가능(`415 UNSUPPORTED_FILE_TYPE`), 파일당 10MB 이하(`413 FILE_TOO_LARGE`), 자료 1건당 최대 5개(`400 FILE_TOO_MANY`).
+- 상세 응답의 `files[].downloadUrl` 은 그 화면에서 쓸 다운로드 주소입니다(회원 `/api/v1/archives/…`, 관리자 `/api/v1/admin/archives/…`). 한글 파일명은 `Content-Disposition` 의 `filename*=UTF-8''…` 로 내려갑니다.
+- 다른 자료의 파일 번호로 요청하면 `404 RESOURCE_NOT_FOUND` 입니다.
+- 서버에는 `app.file.upload-dir` 아래 `archive/연/월` 폴더에 저장됩니다.
+
+상세 응답의 `data`:
+
+```json
+{ "id": 7, "title": "열차 운행 규정", "content": "2026년 개정본", "contentHtml": null,
+  "writerName": "차량 담당자", "viewCount": 3,
+  "createdAt": "2026-10-12T16:40:00+09:00", "updatedAt": null,
+  "files": [ { "id": 15, "originalFileName": "운행규정.pdf", "fileSize": 204800,
+               "contentType": "application/pdf", "downloadUrl": "/api/v1/archives/7/files/15" } ] }
 ```

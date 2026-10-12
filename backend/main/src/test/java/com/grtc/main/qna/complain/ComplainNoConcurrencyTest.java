@@ -19,9 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// 여러 사람이 같은 순간에 민원을 등록해도 민원번호가 겹치지 않는지 확인
-//  - 요청마다 따로 커밋되어야 하므로 이 테스트는 롤백 방식이 아니다.
-//    대신 테스트가 만든 민원과 회원은 끝날 때 직접 지운다. (성공/실패와 상관없이)
 @SpringBootTest
 class ComplainNoConcurrencyTest {
 
@@ -46,7 +43,7 @@ class ComplainNoConcurrencyTest {
             List<Future<String>> futures = new ArrayList<>();
             for (int i = 0; i < REQUESTS; i++) {
                 futures.add(pool.submit(() -> {
-                    start.await(); // 모두 준비된 뒤 한꺼번에 출발
+                    start.await();
                     ComplainDto.Detail created = complainService.create(user.getId(),
                             new ComplainDto.SaveRequest(ComplainType.SIMPLE, null,
                                     "동시 등록 테스트", "동시 등록 테스트 내용", null, null), null);
@@ -58,7 +55,7 @@ class ComplainNoConcurrencyTest {
 
             List<String> numbers = new ArrayList<>();
             for (Future<String> future : futures) {
-                numbers.add(future.get(30, TimeUnit.SECONDS)); // 하나라도 등록에 실패하면 여기서 테스트 실패
+                numbers.add(future.get(30, TimeUnit.SECONDS));
             }
             assertThat(numbers).hasSize(REQUESTS).doesNotHaveDuplicates();
         } finally {

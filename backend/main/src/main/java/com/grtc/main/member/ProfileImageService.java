@@ -22,21 +22,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-// 프로필 이미지 저장 / 썸네일 생성 / 조회 (명세서 3-3 ② PUT /members/me/profile-image)
-//  - 저장 위치: {app.file.upload-dir}/profile
-//  - 원본은 "임의값.확장자", 썸네일은 "임의값_thumb.jpg" (정사각형 160px) 로 저장한다.
-//  - 허용 형식: jpg, png, gif / 파일당 10MB 이하 (명세서 3-2 FILE_TOO_LARGE, UNSUPPORTED_FILE_TYPE)
 @Slf4j
 @Service
 public class ProfileImageService {
 
-    // 프로필 이미지를 내려주는 주소 (ProfileImageController)
     public static final String URL_PREFIX = "/api/v1/files/profile/";
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif");
-    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;   // 파일당 10MB
-    private static final int THUMBNAIL_SIZE = 160;                 // 썸네일 한 변(px)
-    // 이 서비스가 만든 파일명만 조회를 허용한다. (경로 조작 방지)
+    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
+    private static final int THUMBNAIL_SIZE = 160;
     private static final Pattern STORED_NAME =
             Pattern.compile("^[0-9a-f]{32}(_thumb)?\\.(jpg|jpeg|png|gif)$");
 
@@ -46,16 +40,13 @@ public class ProfileImageService {
         this.directory = Paths.get(uploadDir, "profile").toAbsolutePath().normalize();
     }
 
-    // 저장된 파일명 (원본 / 썸네일)
     public record Stored(String imageName, String thumbnailName) {
     }
 
-    // 저장 파일명 -> 프론트에 내려줄 주소 (없으면 null)
     public static String urlOf(String storedName) {
         return (storedName == null || storedName.isBlank()) ? null : URL_PREFIX + storedName;
     }
 
-    // 업로드한 이미지를 검사한 뒤 원본과 썸네일을 저장한다.
     public Stored store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
@@ -70,7 +61,6 @@ public class ProfileImageService {
 
         try {
             byte[] bytes = file.getBytes();
-            // 확장자만 바꾼 파일을 걸러내기 위해 실제로 이미지로 읽히는지 확인
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
             if (image == null) {
                 throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_TYPE);
@@ -90,7 +80,6 @@ public class ProfileImageService {
         }
     }
 
-    // 예전 프로필 이미지 파일 삭제 (실패해도 요청은 계속 진행)
     public void delete(String... storedNames) {
         for (String name : storedNames) {
             if (name == null || !STORED_NAME.matcher(name).matches()) {
@@ -104,7 +93,6 @@ public class ProfileImageService {
         }
     }
 
-    // 조회할 파일 경로 (이 서비스가 만든 파일명이 아니거나 파일이 없으면 404)
     public Path find(String storedName) {
         if (storedName == null || !STORED_NAME.matcher(storedName).matches()) {
             throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
@@ -116,7 +104,6 @@ public class ProfileImageService {
         return path;
     }
 
-    // 가운데를 정사각형으로 잘라 160px 썸네일을 만든다. (투명 배경은 흰색으로 채움)
     private BufferedImage thumbnail(BufferedImage source) {
         int side = Math.min(source.getWidth(), source.getHeight());
         int x = (source.getWidth() - side) / 2;

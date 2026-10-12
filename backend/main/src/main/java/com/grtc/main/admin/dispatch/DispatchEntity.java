@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-// 배차(어느 날, 어느 차량을, 누가, 몇 시에 몇 시까지 운행하는지) 엔티티
 @Entity
 @Table(name = "dispatch")
 @Getter
@@ -21,7 +20,6 @@ public class DispatchEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 배차번호. 예: DISP260930-001 (DISP + 배차일 yyMMdd + 일련번호)
     @Column(name = "dispatch_no", nullable = false, unique = true, length = 30)
     private String dispatchNo;
 
@@ -45,7 +43,6 @@ public class DispatchEntity {
     @Column(nullable = false, length = 20)
     private DispatchStatus status;
 
-    // 비고. 예: 평일 배차, 운전자 대기, 도착시간 조정
     @Column(length = 200)
     private String remark;
 

@@ -4,17 +4,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-// 에러 코드 (명세서 3-2)
-//   - code 는 응답의 error.code 로 그대로 내려간다.
-//   - 명세서에 있는 코드(INVALID_INPUT, UNAUTHORIZED, TOKEN_EXPIRED, FORBIDDEN, RESOURCE_NOT_FOUND,
-//     DUPLICATE_EMAIL, SCHEDULE_CONFLICT, TRAINSET_NOT_AVAILABLE, FILE_TOO_LARGE, UNSUPPORTED_FILE_TYPE,
-//     INTERNAL_ERROR)는 그 이름을 그대로 쓰고, 명세서에 없는 상황은 같은 방식(영문 대문자 이름)으로 추가했다.
-//   - dashboard 서버의 ErrorCode 와 같은 내용으로 맞춘다.
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    // ---------- 공통 ----------
     INVALID_INPUT(HttpStatus.BAD_REQUEST,
             "INVALID_INPUT", "요청값이 올바르지 않습니다."),
     INVALID_PARAMETER(HttpStatus.BAD_REQUEST,
@@ -22,7 +15,6 @@ public enum ErrorCode {
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
             "INTERNAL_ERROR", "서버 오류가 발생했습니다."),
 
-    // ---------- 인증 / 권한 ----------
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED,
             "UNAUTHORIZED", "로그인이 필요합니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED,
@@ -31,11 +23,9 @@ public enum ErrorCode {
             "UNAUTHORIZED", "로그인 정보가 만료되었습니다. 다시 로그인해주세요."),
     ADMIN_ONLY(HttpStatus.FORBIDDEN,
             "FORBIDDEN", "관리자 페이지이므로 열람이 불가합니다."),
-    // 관리자이지만 자기 유형(부서장, 민원 담당자, 차량 담당자)으로는 볼 수 없는 페이지
     ADMIN_PAGE_FORBIDDEN(HttpStatus.FORBIDDEN,
             "FORBIDDEN", "이 페이지를 열람할 권한이 없습니다."),
 
-    // ---------- 로그인 / 회원 ----------
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT,
             "DUPLICATE_LOGIN_ID", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT,
@@ -57,7 +47,6 @@ public enum ErrorCode {
     CANNOT_MODIFY_SELF(HttpStatus.BAD_REQUEST,
             "CANNOT_MODIFY_SELF", "본인의 권한과 상태는 변경할 수 없습니다."),
 
-    // ---------- 차량 ----------
     VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND,
             "RESOURCE_NOT_FOUND", "존재하지 않는 차량입니다."),
     DUPLICATE_VEHICLE_NO(HttpStatus.CONFLICT,
@@ -67,7 +56,6 @@ public enum ErrorCode {
     VEHICLE_NOT_AVAILABLE(HttpStatus.CONFLICT,
             "TRAINSET_NOT_AVAILABLE", "정비 중이거나 운행정지된 편성은 배차할 수 없습니다."),
 
-    // ---------- 배차 ----------
     DISPATCH_NOT_FOUND(HttpStatus.NOT_FOUND,
             "RESOURCE_NOT_FOUND", "존재하지 않는 배차입니다."),
     INVALID_DISPATCH_TIME(HttpStatus.BAD_REQUEST,
@@ -77,11 +65,14 @@ public enum ErrorCode {
     DISPATCH_CANCELLED(HttpStatus.BAD_REQUEST,
             "DISPATCH_CANCELLED", "취소된 배차는 수정할 수 없습니다."),
 
-    // ---------- 노선 / 운행 ----------
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "RESOURCE_NOT_FOUND", "존재하지 않는 공지사항입니다."),
+    ARCHIVE_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "RESOURCE_NOT_FOUND", "존재하지 않는 자료입니다."),
+
     ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND,
             "RESOURCE_NOT_FOUND", "노선 정보를 찾을 수 없습니다."),
 
-    // ---------- 민원 ----------
     COMPLAIN_NOT_FOUND(HttpStatus.NOT_FOUND,
             "RESOURCE_NOT_FOUND", "존재하지 않는 민원입니다."),
     COMPLAIN_NOT_MODIFIABLE(HttpStatus.CONFLICT,
@@ -93,7 +84,6 @@ public enum ErrorCode {
     COMPLAIN_WITHDRAWN(HttpStatus.CONFLICT,
             "COMPLAIN_WITHDRAWN", "민원인이 철회한 민원에는 답변할 수 없습니다."),
 
-    // ---------- 첨부파일 ----------
     FILE_TOO_MANY(HttpStatus.BAD_REQUEST,
             "FILE_TOO_MANY", "첨부파일은 최대 5개까지 올릴 수 있습니다."),
     FILE_TOO_LARGE(HttpStatus.valueOf(413),

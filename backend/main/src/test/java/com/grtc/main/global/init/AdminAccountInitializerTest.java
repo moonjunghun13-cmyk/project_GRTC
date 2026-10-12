@@ -21,8 +21,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// 관리자 계정 자동 생성 확인 (광주교통공사 임직원 세부사항 3번의 8명, 4번의 열람 가능 페이지)
-//  - 계정을 만들고 고치는 동작은 임시 아이디로 확인하고, 테스트가 끝나면 전부 롤백한다.
 @SpringBootTest
 @Transactional
 class AdminAccountInitializerTest {
@@ -53,10 +51,8 @@ class AdminAccountInitializerTest {
         return type.pageList().stream().map(AdminPage::getLabel).toList();
     }
 
-    // ---------- 문서와 같은지 ----------
-
     @Test
-    void 문서_3번의_8명이_부서와_직급까지_그대로_정의되어_있다() {
+    void 문서_3번의_관리자_6명이_부서와_직급까지_그대로_정의되어_있다() {
         List<SeedAdmin> seeds = initializer.seedAdmins();
 
         assertThat(seeds).extracting(SeedAdmin::loginId).doesNotHaveDuplicates();
@@ -64,14 +60,11 @@ class AdminAccountInitializerTest {
                 .containsExactly(
                         "시스템 관리자 / IT전략팀 / 차장",
                         "시스템 관리자 / IT전략팀 / 과장",
-                        "부서장 / 고객사업처 / 처장",
-                        "부서장 / 차량운영처 / 처장",
                         "민원 담당자 / 고객만족팀 / 대리",
                         "민원 담당자 / 고객만족팀 / 주임",
                         "차량 담당자 / 차량팀 / 부장",
                         "차량 담당자 / 차량팀 / 차장");
 
-        // 회원정보 화면의 부서/직급 선택 목록에 있는 값이어야 한다. (없으면 수정 화면에서 선택이 비어 보인다)
         assertThat(seeds).allSatisfy(s -> {
             assertThat(MemberService.DEPARTMENTS).contains(s.department());
             assertThat(MemberService.POSITIONS).contains(s.position());
@@ -84,26 +77,28 @@ class AdminAccountInitializerTest {
             List<String> pages = pageLabels(seed.type());
             switch (seed.type()) {
                 case SYSTEM_ADMIN -> assertThat(pages).as(seed.loginId())
-                        .containsExactly("대시보드", "차량관리", "배차관리", "운행관리", "민원관리", "회원관리");
-                case DEPARTMENT_HEAD -> assertThat(pages).as(seed.loginId()).containsExactly("대시보드");
-                case COMPLAINT_MANAGER -> assertThat(pages).as(seed.loginId()).containsExactly("대시보드", "민원관리");
-                case VEHICLE_MANAGER -> assertThat(pages).as(seed.loginId()).containsExactly("대시보드", "차량관리");
+                        .containsExactly("대시보드", "차량관리", "배차관리", "운행관리", "민원관리", "회원관리",
+                                "공지관리", "자료실관리");
+                case DEPARTMENT_HEAD -> assertThat(pages).as(seed.loginId())
+                        .containsExactly("대시보드", "공지관리", "자료실관리");
+                case COMPLAINT_MANAGER -> assertThat(pages).as(seed.loginId())
+                        .containsExactly("대시보드", "민원관리", "공지관리", "자료실관리");
+                case VEHICLE_MANAGER -> assertThat(pages).as(seed.loginId())
+                        .containsExactly("대시보드", "차량관리", "배차관리", "공지관리", "자료실관리");
             }
         }
-        // 유형마다 2명씩
         for (AdminType type : AdminType.values()) {
-            assertThat(initializer.seedAdmins()).filteredOn(s -> s.type() == type).as(type.getLabel()).hasSize(2);
+            assertThat(initializer.seedAdmins()).filteredOn(s -> s.type() == type).as(type.getLabel())
+                    .hasSize(type == AdminType.DEPARTMENT_HEAD ? 0 : 2);
         }
     }
-
-    // ---------- 계정을 만들고 고치는 동작 ----------
 
     @Test
     void 없는_계정은_유형_부서_직급을_넣어_만든다() {
         SeedAdmin seed = new SeedAdmin(tempId(), "시드테스트", AdminType.COMPLAINT_MANAGER, "고객만족팀", "주임");
 
         initializer.apply(seed);
-        initializer.apply(seed); // 다시 실행해도 또 만들지 않는다
+        initializer.apply(seed);
 
         LoginEntity member = reload(seed.loginId());
         assertThat(member.getRole()).isEqualTo(Role.ADMIN);
@@ -112,9 +107,8 @@ class AdminAccountInitializerTest {
         assertThat(member.getPosition()).isEqualTo("주임");
         assertThat(passwordEncoder.matches(seedPassword, member.getPassword())).isTrue();
 
-        // 로그인 응답에 내려가는 열람 가능 페이지
         assertThat(LoginResponseDto.from(member).getPages()).extracting(LoginResponseDto.PageInfo::code)
-                .containsExactly("DASHBOARD", "COMPLAINTS");
+                .containsExactly("DASHBOARD", "COMPLAINTS", "NOTICES", "ARCHIVES");
     }
 
     @Test
@@ -126,14 +120,13 @@ class AdminAccountInitializerTest {
         initializer.apply(new SeedAdmin(loginId, "시드이름", AdminType.VEHICLE_MANAGER, "차량팀", "부장"));
 
         LoginEntity member = reload(loginId);
-        assertThat(member.getAdminType()).isEqualTo(AdminType.VEHICLE_MANAGER); // 비어 있던 유형은 채운다
-        assertThat(member.getDepartment()).isEqualTo("차량팀");                  // 비어 있던 부서도 채운다
-        assertThat(member.getPosition()).isEqualTo("직접고친직급");              // 직접 고친 값은 그대로
+        assertThat(member.getAdminType()).isEqualTo(AdminType.VEHICLE_MANAGER);
+        assertThat(member.getDepartment()).isEqualTo("차량팀");
+        assertThat(member.getPosition()).isEqualTo("직접고친직급");
         assertThat(member.getName()).isEqualTo("원래이름");
         assertThat(member.getPassword()).isEqualTo("그대로");
     }
 
-    // 예전 버전은 admin 계정을 운영팀 / 시스템 관리자로 만들었다. 그 값 그대로면 문서의 값으로 바꾼다.
     @Test
     void 예전_버전이_넣은_부서와_직급은_문서의_값으로_바뀐다() {
         String loginId = tempId();

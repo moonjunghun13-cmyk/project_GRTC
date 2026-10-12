@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-// 대시보드 통계 조회 (노선운영현황, 차량운행현황, 가동률, 민원건수, 답변건수)
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -46,7 +45,6 @@ public class DashboardService {
                 .toList();
     }
 
-    // 민원건수: 기간 안에 접수된 민원의 유형별 건수
     private DashboardDto.ComplainCountCard complainCount(DashboardPeriod period) {
         LocalDateTime from = period.from(LocalDate.now());
         List<DashboardDto.CountItem> byType = Arrays.stream(ComplainType.values())
@@ -57,7 +55,6 @@ public class DashboardService {
                 complainRepository.countByCreatedAtGreaterThanEqual(from), byType);
     }
 
-    // 답변건수: 기간 안에 접수된 민원의 처리상태별 건수
     private DashboardDto.AnswerCountCard answerCount(DashboardPeriod period) {
         LocalDateTime from = period.from(LocalDate.now());
         List<DashboardDto.CountItem> byStatus = Arrays.stream(ComplainStatus.values())
@@ -68,9 +65,7 @@ public class DashboardService {
                 complainRepository.countByCreatedAtGreaterThanEqual(from), byStatus);
     }
 
-    // 노선 데이터가 아직 없어도 대시보드의 나머지 카드는 보여준다.
     private OperationDto.RouteInfo routeOrNull() {
-        // (예외로 처리하면 트랜잭션이 rollback-only 로 표시되므로 먼저 존재 여부를 확인한다)
         return routeRepository.count() == 0 ? null : operationService.routeInfo();
     }
 }

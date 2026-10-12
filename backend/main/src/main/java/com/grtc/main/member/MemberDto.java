@@ -12,15 +12,11 @@ import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-// 내 정보(회원정보) 화면에서 쓰는 요청·응답 모음
 public final class MemberDto {
 
     private MemberDto() {
     }
 
-    // 회원정보(상세) 화면 (본인 정보이므로 연락처 전체 표시)
-    //   profileImageUrl / profileThumbnailUrl: main 서버 기준 경로 (예: /api/v1/files/profile/xxxx.png), 없으면 null
-    //   joinedAt: ISO-8601 (예: 2026-10-01T14:40:00+09:00)
     public record Detail(
             Long id,
             String name,
@@ -57,9 +53,6 @@ public final class MemberDto {
         }
     }
 
-    // 내 정보 수정 요청 (PATCH: 보낸 항목만 바뀐다. 보내지 않은 항목(null)은 그대로 둔다)
-    //   - name, email 은 보낼 경우 비워둘 수 없다.
-    //   - phone, department, position 은 빈 문자열("")로 보내면 값이 지워진다.
     public record UpdateRequest(
             @Pattern(regexp = "(?s).*\\S.*", message = "필수 입력란입니다.")
             @Size(max = 30, message = "이름은 최대 30자까지 입력 가능합니다.")
@@ -82,7 +75,6 @@ public final class MemberDto {
     ) {
     }
 
-    // 비밀번호 변경 요청 (새 비밀번호 규칙은 회원가입과 같다: 8~64자, 특수문자 1개 이상)
     public record PasswordRequest(
             @NotBlank(message = "필수 입력란입니다.")
             String currentPassword,
@@ -97,11 +89,9 @@ public final class MemberDto {
     ) {
     }
 
-    // 프로필 이미지 변경 응답
     public record ProfileImage(String profileImageUrl, String profileThumbnailUrl) {
     }
 
-    // 소속 부서 / 직급 선택 목록
     public record Options(List<String> departments, List<String> positions) {
     }
 }

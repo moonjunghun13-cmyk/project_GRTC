@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// HtmlSanitizer 가 서식은 남기고 위험한 내용은 지우는지 확인 (DB·스프링 없이 실행되는 단위 테스트)
 class HtmlSanitizerTest {
 
     @Test

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 // 배차관리 API (명세서 3-3 ④ 배차) - 권한: 관리자
-//   Base URL: /api/v1
 @RestController
 @RequestMapping("/api/v1/admin/dispatches")
 @RequiredArgsConstructor
@@ -29,8 +28,6 @@ public class DispatchController {
 
     private final DispatchService dispatchService;
 
-    // 배차 목록 (검색어, 배차일자(yyyy-MM-dd), 차량, 운전자, 상태 필터, 페이징: page 0부터)
-    //   예) GET /api/v1/admin/dispatches?date=2026-09-30&status=WAITING&page=0&size=10&sort=dispatchDate,desc
     @GetMapping
     public ApiResponse<PageResponse<DispatchDto.Response>> list(
             @RequestParam(required = false) String keyword,
@@ -47,7 +44,6 @@ public class DispatchController {
     }
 
     // 상단 요약 카드 (전체 / 완료 / 대기 / 변경 / 취소 건수)
-    //   목록과 같은 검색 조건을 보내면 그 조건 기준으로 센다. (상태 필터는 제외)
     @GetMapping("/summary")
     public ApiResponse<DispatchDto.Summary> summary(
             @RequestParam(required = false) String keyword,
