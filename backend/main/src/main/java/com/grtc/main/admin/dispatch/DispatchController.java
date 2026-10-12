@@ -79,16 +79,16 @@ public class DispatchController {
         return ApiResponse.ok(dispatchService.update(dispatchId, request));
     }
 
-    // 배차 취소 (status -> CANCELLED)
-    @PatchMapping("/{dispatchId}/cancel")
-    public ApiResponse<DispatchDto.Response> cancel(@PathVariable Long dispatchId) {
-        return ApiResponse.ok(dispatchService.cancel(dispatchId));
-    }
-
-    // 배차 삭제 (기록 자체를 지운다. 기록을 남기려면 위의 취소를 쓴다)
+    // 배차 삭제 (기록을 실제로 삭제한다. 취소 상태 변경과 별도)
     @DeleteMapping("/{dispatchId}")
     public ApiResponse<Void> delete(@PathVariable Long dispatchId) {
         dispatchService.delete(dispatchId);
         return ApiResponse.ok();
+    }
+
+    // 배차 취소 (status -> CANCELLED)
+    @PatchMapping("/{dispatchId}/cancel")
+    public ApiResponse<DispatchDto.Response> cancel(@PathVariable Long dispatchId) {
+        return ApiResponse.ok(dispatchService.cancel(dispatchId));
     }
 }
