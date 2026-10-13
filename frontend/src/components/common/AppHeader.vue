@@ -4,8 +4,10 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { logoutCurrentUser } from '../../services/logout'
 import logo from '../../assets/logo.png'
+import userHeaderTrain from '../../assets/train3.png'
 import headerLandscape from '../../assets/back.png'
-import HeaderRouteMenu from '../navigation/HeaderRouteMenu.vue'
+import AdminHeaderMenu from '../navigation/AdminHeaderMenu.vue'
+
 import { currentUser } from '../../stores/currentUser'
 defineProps({ title: { type: String, default: '광주교통공사' }, admin: Boolean })
 const router = useRouter()
@@ -22,7 +24,7 @@ async function logout() {
   finally { logoutBusy.value = false }
 }
 </script>
-<template><header class="app-header" :class="{ 'admin-header': admin, 'header-boundary': headerBoundary, 'complaint-header': adminComplaint, 'landscape-header': admin && currentUser?.role === 'ADMIN' }"><span v-if="admin && currentUser?.role === 'ADMIN'" class="header-landscape" aria-hidden="true"><img :src="headerLandscape" alt="" /></span><RouterLink :to="homeRoute"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><HeaderRouteMenu v-if="admin && currentUser?.role === 'ADMIN'" /><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button type="button" :disabled="logoutBusy" @click="logout">로그아웃</button></div></header></template>
+<template><header class="app-header" :class="{ 'admin-header': admin, 'header-boundary': headerBoundary, 'complaint-header': adminComplaint, 'citizen-landscape-header': admin && currentUser?.role === 'USER' }"><span v-if="admin && currentUser?.role === 'USER'" class="header-landscape" aria-hidden="true"><img :src="headerLandscape" alt="" /></span><RouterLink :to="homeRoute"><img :src="logo" alt="광주교통공사" /></RouterLink><span v-if="!admin">{{ title }}</span><div v-if="admin && currentUser?.role === 'USER'" class="user-header-train-track" aria-hidden="true"><span class="user-header-bridge"></span><img :src="userHeaderTrain" alt="" /></div><AdminHeaderMenu v-if="admin && currentUser?.role === 'ADMIN'" /><div class="header-session"><span v-if="logoutError" role="alert">{{ logoutError }}</span><button type="button" :disabled="logoutBusy" @click="logout">로그아웃</button></div></header></template>
 
 <style scoped>
 .app-header.admin-header { height: 70px; min-height: 70px; flex-shrink: 0; padding: 0 28px 0 0; flex-wrap: nowrap; border-bottom: 1px solid #e9eef1; }
@@ -55,3 +57,7 @@ async function logout() {
 
 
 
+
+<style scoped>.user-header-train-track{position:relative;flex:1;min-width:0;height:100%;overflow:hidden;pointer-events:none}.user-header-train-track img{position:absolute;top:50%;height:28px;width:auto;max-width:none;transform:translateY(-50%);animation:user-header-train-pass 12s linear infinite}@keyframes user-header-train-pass{from{left:-80px}to{left:100%}}@media(prefers-reduced-motion:reduce){.user-header-train-track img{animation:none;left:50%;transform:translate(-50%,-50%)}}</style>
+
+<style scoped>.citizen-landscape-header{position:relative;isolation:isolate;background:white}.user-header-train-track{overflow:hidden}.user-header-train-track::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(255,255,255,.85),rgba(255,255,255,.2));pointer-events:none}.user-header-bridge{position:absolute;left:0;right:0;top:44px;height:4px;background:#CBD5DF;border-top:1.5px solid #A4ADB5;box-sizing:border-box}.user-header-bridge::after{content:"";position:absolute;left:0;right:0;top:4px;height:7px;background:repeating-linear-gradient(to right,transparent 0,transparent 96px,#DDE5EC 96px,#DDE5EC 100px)}.user-header-train-track img{top:16px;transform:none;height:28px;clip-path:inset(0 0 2px 0)}@media(prefers-reduced-motion:reduce){.user-header-train-track img{transform:translateX(-50%)}}</style>

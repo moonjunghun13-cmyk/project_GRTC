@@ -2,7 +2,9 @@
 import {depotMoves,dayTypeOf,dayTypeLabel,serviceDate,moveTypes} from './depotTimetable.js'
 export const vehicleStatuses=[{value:'RUNNING',label:'운행중',tone:'green'},{value:'STANDBY',label:'대기',tone:'blue'},{value:'MAINTENANCE',label:'정비',tone:'orange'},{value:'STOPPED',label:'운행정지',tone:'red'}]
 export const dispatchStatuses=[{value:'COMPLETED',label:'배차 완료',tone:'green'},{value:'WAITING',label:'배차 대기',tone:'blue'},{value:'CHANGED',label:'배차 변경',tone:'orange'},{value:'CANCELLED',label:'배차 취소',tone:'red'}]
-export const vehicles=Array.from({length:64},(_,i)=>({id:String(i+1),vehicleNo:'G'+String(101+i),status:vehicleStatuses[i%4].value,lastInspectionDate:'2026-09-'+String(1+i%28).padStart(2,'0')}))
+// 광주 도시철도 1호선 전동차 23편성(101~123편성). 상태는 백엔드 초기 데이터(AdminDataSeeder)와 같게 맞춘다.
+const standbySets=[102,106,110,120],maintenanceSets=[103,119]
+export const vehicles=Array.from({length:23},(_,i)=>{const no=101+i;return {id:String(i+1),vehicleNo:no+'편성',status:maintenanceSets.includes(no)?'MAINTENANCE':standbySets.includes(no)?'STANDBY':'RUNNING',lastInspectionDate:'2026-09-'+String(1+i%28).padStart(2,'0')}})
 const driverNames=['김민수','이지훈','박서연','장하늘','최유진','한지민','송재민','전수빈','정민호','윤지우','강도현','조예린','임태윤','오세라','신동욱','문가은','배준서','황보영','서지안','노현우']
 export const drivers=driverNames.map(name=>({value:name,label:name}))
 // 입·출고 시간표로 하루치 배차를 만든다. (백엔드 DispatchTimetableGenerator 와 같은 규칙)
