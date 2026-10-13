@@ -113,13 +113,13 @@ onUnmounted(() => {
 
 .intro-title span {
   display: block;
-  color: #3298db;
+  color: var(--grtc-focus);
   font-size: calc(88 * var(--scale));
 }
 
 .intro-title strong {
   display: block;
-  color: #123d78;
+  color: var(--grtc-heading);
   font-size: calc(100 * var(--scale));
   font-weight: 800;
 }
@@ -129,7 +129,7 @@ onUnmounted(() => {
   left: calc(160 * var(--scale));
   top: calc(420 * var(--scale));
   margin: 0;
-  color: #68727c;
+  color: var(--grtc-muted);
   font-size: calc(30 * var(--scale));
   line-height: 1.65;
   letter-spacing: -0.035em;
@@ -145,7 +145,7 @@ onUnmounted(() => {
   width: calc(240 * var(--scale));
   height: calc(64 * var(--scale));
   border-radius: calc(16 * var(--scale));
-  background: linear-gradient(135deg, #225b9b, #123d78);
+  background: linear-gradient(135deg, #225b9b, var(--grtc-heading));
   color: #fff;
   font-size: calc(24 * var(--scale));
   gap: calc(18 * var(--scale));
@@ -157,7 +157,7 @@ onUnmounted(() => {
 
 .intro-login:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgb(18 61 120 / 32%); }
 .intro-login:active { transform: translateY(0); box-shadow: 0 4px 12px rgb(18 61 120 / 24%); }
-.intro-login:focus-visible { outline: 3px solid #3298db; outline-offset: 5px; }
+.intro-login:focus-visible { outline: 3px solid var(--grtc-focus); outline-offset: 5px; }
 
 /* Portrait screens keep the full character group visible at its original ratio. */
 @media (max-aspect-ratio: 4/3) {

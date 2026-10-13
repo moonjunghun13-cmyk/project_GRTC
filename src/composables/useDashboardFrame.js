@@ -2,6 +2,7 @@ import {computed,reactive,ref,watch} from 'vue'
 import {general,mainApi,API_INTEGRATION_ENABLED,errorMessage} from '../api/clients'
 import {currentUser} from '../stores/currentUser'
 import {canAccessAdminPath} from '../utils/adminAccess'
+import {dashboardWidgetsFor} from '../config/adminDashboardWidgets'
 import {excludeWithdrawn} from '../services/dashboardComplaints'
 import {getComplaintOptions} from '../services/complaintOptions'
 import {getFleetSource} from '../services/mockFleet'
@@ -18,7 +19,7 @@ export function useDashboardFrame(){
  const complaints=canComplaints?await excludeWithdrawn(d.complaints,period):{total:null,byType:d.complaints.byType.map(o=>({...o,count:null}))}
  if(request!==sequence)return
  Object.assign(data,{routeName:d.route?.name,routeStatus:d.route?.statusLabel,stations:d.route?.stationCount,trips:d.route?.dailyRunCount,operating:d.vehicles.running,waiting:d.vehicles.standby,maintenance:d.vehicles.maintenance,stopped:d.vehicles.stopped,fleet:d.vehicles.total,complaintTotal:complaints.total,answerTotal:d.answers.total,complaints:complaints.byType.map(o=>({code:o.code,label:o.label,value:o.count})),answers:d.answers.byStatus.map(o=>({label:o.label,value:o.count}))});remoteSummary.value=s
- if(!canComplaints)error.value='현재 계정의 대시보드 API는 철회를 포함한 통계를 반환합니다. 철회 제외 유형별 통계를 조회할 권한이 없어 민원건수는 표시하지 않습니다.'
+ if(!canComplaints&&dashboardWidgetsFor(currentUser.value).includes('complaints'))error.value='현재 계정의 대시보드 API는 철회를 포함한 통계를 반환합니다. 철회 제외 유형별 통계를 조회할 권한이 없어 민원건수는 표시하지 않습니다.'
  }catch(e){if(request===sequence)error.value=errorMessage(e)}},{immediate:true})
  const dispatchSummary=computed(()=>API_INTEGRATION_ENABLED?{total:remoteSummary.value?.total??null,states:source.statuses.map(o=>({...o,count:remoteSummary.value?.[{COMPLETED:'completed',WAITING:'waiting',CHANGED:'changed',CANCELLED:'cancelled'}[o.value]]??null}))}:{total:source.rows?.length??null,states:source.statuses.map(o=>({...o,count:source.rows?source.rows.filter(d=>d.status===o.value).length:null}))})
  return {data,dispatchSummary,complaintPeriod,answerPeriod,error}

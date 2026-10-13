@@ -66,21 +66,21 @@ function addLink() {
  </div>
 </template>
 <style scoped>
-.complaint-editor { flex: 1; min-height: 160px; display: flex; flex-direction: column; border: 1px solid #c8dce9; border-radius: 10px; background: white; }
+.complaint-editor { flex: 1; min-height: 160px; display: flex; flex-direction: column; border: 1px solid var(--grtc-border); border-radius: 10px; background: white; }
 .editor-invalid { border-color: #c53740; }
-.editor-toolbar { display: flex; gap: 6px; padding: 6px 10px; border-bottom: 1px solid #e1edf4; background: #f8fbfd; border-radius: 10px 10px 0 0; }
-.editor-toolbar button { display: grid; place-items: center; min-width: 32px; height: 30px; padding: 0 7px; border: 0; border-radius: 5px; background: none; color: #325975; font-size: 17px; cursor: pointer; }
-.editor-toolbar button:hover { background: #e4f2fa; }
+.editor-toolbar { display: flex; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--grtc-border-soft); background: var(--grtc-surface); border-radius: 10px 10px 0 0; }
+.editor-toolbar button { display: grid; place-items: center; min-width: 32px; height: 30px; padding: 0 7px; border: 0; border-radius: 5px; background: none; color: var(--grtc-text); font-size: 17px; cursor: pointer; }
+.editor-toolbar button:hover { background: var(--grtc-tint); }
 .editor-toolbar svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; }
-.editor-surface { flex: 1 1 0; min-height: 90px; overflow: auto; padding: 14px 18px; color: #243c50; font-size: 17px; line-height: 1.6; outline: none; overflow-wrap: anywhere; }
-.editor-surface:empty::before { content: attr(data-placeholder); color: #91a0ab; pointer-events: none; }
-.editor-surface :deep(a) { color: #0078ae; }
-.editor-counter { display: flex; justify-content: space-between; gap: 12px; padding: 4px 14px 8px; font-size: 14px; color: #7a8b99; }
+.editor-surface { flex: 1 1 0; min-height: 90px; overflow: auto; padding: 14px 18px; color: var(--grtc-text); font-size: 17px; line-height: 1.6; outline: none; overflow-wrap: anywhere; }
+.editor-surface:empty::before { content: attr(data-placeholder); color: var(--grtc-muted); pointer-events: none; }
+.editor-surface :deep(a) { color: var(--grtc-primary); }
+.editor-counter { display: flex; justify-content: space-between; gap: 12px; padding: 4px 14px 8px; font-size: 14px; color: var(--grtc-muted); }
 .editor-counter > :first-child { color: #c53740; }
 .editor-link-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; font-size: 15px; }
-.editor-link-panel input { flex: 1; min-width: 150px; border: 1px solid #c8dce9; border-radius: 5px; padding: 6px; font: inherit; }
-.editor-link-panel button { padding: 6px 10px; border: 1px solid #c8dce9; background: white; border-radius: 5px; color: #064b76; cursor: pointer; }
+.editor-link-panel input { flex: 1; min-width: 150px; border: 1px solid var(--grtc-border); border-radius: 5px; padding: 6px; font: inherit; }
+.editor-link-panel button { padding: 6px 10px; border: 1px solid var(--grtc-border); background: white; border-radius: 5px; color: var(--grtc-heading); cursor: pointer; }
 .editor-link-panel p { width: 100%; margin: 0; color: #c53740; }
-.complaint-editor:focus-within { outline: 2px solid #3298db; outline-offset: 1px; }
+.complaint-editor:focus-within { outline: 2px solid var(--grtc-focus); outline-offset: 1px; }
 </style>
 

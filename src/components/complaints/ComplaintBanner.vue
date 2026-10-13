@@ -12,11 +12,11 @@ defineProps({title:{type:String,default:'민원관리'},description:{type:String
   </section>
 </template>
 <style scoped>
-.complaint-banner { position: relative; margin: 0; padding: 0; background: #f3faff; border: 0; border-radius: 0; box-shadow: none; container-type: inline-size; }
+.complaint-banner { position: relative; margin: 0; padding: 0; background: var(--grtc-surface); border: 0; border-radius: 0; box-shadow: none; container-type: inline-size; }
 .complaint-banner img { display: block; width: 100%; height: auto; }
 .complaint-banner-copy { position: absolute; inset: 0 auto 0 60px; max-width: 58%; display: flex; flex-direction: column; justify-content: center; text-align: left; }
-.complaint-banner h1 { margin: 0 0 14px; color: #00699f; font-size: 48px; font-weight: 800; line-height: 1.2; }
-.complaint-banner p { margin: 0; color: #666666; font-size: 24px; font-weight: 600; line-height: 1.55; }
+.complaint-banner h1 { margin: 0 0 14px; color: var(--grtc-primary); font-size: 48px; font-weight: 800; line-height: 1.2; }
+.complaint-banner p { margin: 0; color: var(--grtc-muted); font-size: 24px; font-weight: 600; line-height: 1.55; }
 @container (max-width: 1200px) {
   .complaint-banner-copy { left: 40px; }
   .complaint-banner h1 { font-size: 40px; }

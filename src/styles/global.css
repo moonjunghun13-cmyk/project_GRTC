@@ -1,3 +1,17 @@
+/* Content palette; header and navigation retain their existing colors. */
+:root {
+  --grtc-heading: #163b5c;
+  --grtc-primary: #126b9b;
+  --grtc-primary-hover: #0c527d;
+  --grtc-text: #293f50;
+  --grtc-muted: #526777;
+  --grtc-border: #bed0dd;
+  --grtc-border-soft: #d5e1e9;
+  --grtc-tint: #e7f1f8;
+  --grtc-surface: #f3f7fa;
+  --grtc-focus: #2987bd;
+}
+
 @font-face {
   font-family: 'SUIT';
   src: url('/fonts/suit/SUIT-Variable.woff2') format('woff2');
@@ -111,3 +125,143 @@ button, input, select, textarea, input::file-selector-button {
 h1, h2, h3, h4, h5, h6 { font-weight: 800; }
 button, input::file-selector-button, th { font-weight: 700 !important; }
 input, select, textarea { font-weight: 400 !important; }
+/* Bright, friendly content theme; shared navigation stays unchanged. */
+:is(.app-content,.authentication-main,.intro) {
+  --grtc-heading: #124675;
+  --grtc-primary: #007AC2;
+  --grtc-primary-hover: #0063A3;
+  --grtc-text: #293E52;
+  --grtc-muted: #526A7D;
+  --grtc-border: #ADCFE4;
+  --grtc-border-soft: #D1E6F2;
+  --grtc-tint: #E5F6FF;
+  --grtc-surface: #F2FAFF;
+  --grtc-focus: #008EE0;
+}
+.management-shell .app-content { background-color: #FFFFFF !important; }
+.app-content .dashboard-card { background-color: #FFFFFF; border-color: #D1E6F2 !important; }
+.app-content :is(.fleet-summary .summary-filter) { background-color: #FFFFFF !important; border-color: #C8E1EF !important; }
+.app-content .fleet-summary .summary-filter:hover { background-color: #F0FAFF !important; border-color: #65BCE8 !important; }
+.app-content .fleet-summary .summary-filter.active { background-color: #E5F6FF !important; border-color: #007AC2 !important; }
+.app-content .summary-icon { background-color: #E5F6FF !important; color: #007AC2 !important; }
+.app-content table thead th { background-color: #E5F3FC !important; color: #124675 !important; }
+.app-content table tbody { background-color: #FFFFFF; }
+.app-content table tbody tr:hover { background-color: #F0FAFF !important; }
+.app-content :is(.member-summary,.member-edit-card,.member-list-card) { border-color: #C8E1EF; }
+.app-content .member-save,.app-content .answer-form button,
+.app-content .complaint-actions :is(button,a):not(.secondary):not(.danger) { background-color: #007AC2 !important; border-color: #007AC2 !important; color: #FFFFFF !important; }
+.app-content .fleet-badge[data-tone=green],.app-content .status-badge[data-status=ANSWERED] { background-color: #E3F7ED !important; color: #167248 !important; }
+.app-content .fleet-badge[data-tone=blue],.app-content .status-badge[data-status=TRANSFERRED] { background-color: #E4F3FF !important; color: #086EAC !important; }
+.app-content .fleet-badge[data-tone=orange],.app-content .status-badge[data-status=RECEIVED] { background-color: #FFF2DB !important; color: #925409 !important; }
+.app-content .fleet-badge[data-tone=red],.app-content .status-badge[data-status=WAITING] { background-color: #FFE9EE !important; color: #AE3451 !important; }
+.app-content .card-arrow { color: #008DD4; }
+.app-content .dispatch-states > div { background-color: #F2FAFF; }
+.app-content .dispatch-states [data-tone=green] i { background-color: #299C68; }
+.app-content .dispatch-states [data-tone=blue] i { background-color: #008DD4; }
+.app-content .dispatch-states [data-tone=orange] i { background-color: #D58A24; }
+.app-content .dispatch-states [data-tone=red] i { background-color: #D45070; }
+
+/* Shared scenery for fleet lists and dashboard. */
+.management-shell .app-content:is(.fleet-content-shell,.dashboard-content-shell):not(:has(.members-page)) {
+  position: relative;
+  isolation: isolate;
+}
+.management-shell .app-content:is(.fleet-content-shell,.dashboard-content-shell):not(:has(.members-page))::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('../assets/background2.png') center bottom / cover no-repeat;
+  opacity: 0.50;
+}
+
+.management-shell .app-content.dashboard-content-shell::before { opacity: 1 !important; }
+
+/* Borderless dashboard cards with a soft hover glow. */
+.app-content .dashboard-card { border-color: transparent !important; }
+.app-content .dashboard-card:hover,
+.app-content .dashboard-card:focus-within {
+  border-color: transparent !important;
+  box-shadow: 0 0 14px rgba(0, 153, 230, 0.15), 0 5px 24px rgba(0, 122, 194, 0.12) !important;
+}
+
+/* Gentle elevation for dashboard cards. */
+.app-content .dashboard-card {
+  box-shadow: 0 2px 3px rgba(19, 70, 105, 0.06), 0 8px 22px rgba(19, 70, 105, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+.app-content .dashboard-card:hover,
+.app-content .dashboard-card:focus-within {
+  box-shadow: 0 0 16px rgba(0, 153, 230, 0.16), 0 12px 28px rgba(19, 70, 105, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Content surfaces: soft shadows replace outlines; search controls stay unchanged. */
+.app-content :is(.fleet-summary .summary-filter,.member-summary,.member-edit-card,.member-list-card,.complaint-card,.detail-card,.registration-card) {
+  border-color: transparent !important;
+  box-shadow: 0 2px 4px rgba(19,70,105,.05), 0 6px 18px rgba(19,70,105,.09) !important;
+}
+.app-content .fleet-summary .summary-filter.active {
+  border-color: transparent !important;
+  box-shadow: 0 2px 5px rgba(0,122,194,.10), 0 6px 18px rgba(0,122,194,.16) !important;
+}
+.app-content :is(.fleet-table,.list-table-wrap) {
+  box-shadow: 0 2px 4px rgba(19,70,105,.05), 0 6px 18px rgba(19,70,105,.09);
+}
+.app-content .complaint-official-answer { border-left-color: var(--grtc-primary) !important; }
+
+/* Function-specific icon colors; card content and selection styles stay intact. */
+.app-content .route-card .dashboard-icon { color: #007AC2; background-color: #E5F4FF; }
+.app-content .vehicle-card .dashboard-icon { color: #168363; background-color: #E4F6EE; }
+.app-content .dispatch-card .dashboard-icon { color: #7357BD; background-color: #F0EAFC; }
+.app-content .complaint-card .dashboard-icon { color: #C47619; background-color: #FFF2DE; }
+.app-content .answer-card .dashboard-icon { color: #16899C; background-color: #E1F6F8; }
+.app-content .fleet-summary .summary-filter[data-tone=green] .summary-icon { color: #168363 !important; background-color: #E4F6EE !important; }
+.app-content .fleet-summary .summary-filter[data-tone=blue] .summary-icon { color: #007AC2 !important; background-color: #E5F4FF !important; }
+.app-content .fleet-summary .summary-filter[data-tone=orange] .summary-icon { color: #C47619 !important; background-color: #FFF2DE !important; }
+.app-content .fleet-summary .summary-filter[data-tone=red] .summary-icon { color: #C44965 !important; background-color: #FFEAF0 !important; }
+
+
+
+
+
+
+
+
+
+
+/* Member-list scenery; member detail/profile pages stay unchanged. */
+.management-shell .app-content:has(> .member-list-page) {
+  position: relative;
+  isolation: isolate;
+}
+.management-shell .app-content:has(> .member-list-page)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('../assets/background2.png') center bottom / cover no-repeat;
+  opacity: 0.5;
+}
+
+/* Bottom scenery on complaint pages only, behind all interactive content. */
+.management-shell .app-content.complaint-content-shell:not(:has(.members-page)) {
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+}
+.management-shell .app-content.complaint-content-shell:not(:has(.members-page))::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(70px, 8vw, 140px);
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('../assets/bottom.png');
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-position: center calc(100% + 12.33cqw);
+  opacity: 0.3;
+}
