@@ -1,0 +1,223 @@
+/* Admin-only system. Logo samples: blue #006BA6, sky #62B5D4, green #83AF38. */
+.admin-ui{--sidebar-width:240px;--admin-max-width:1600px;--admin-space:24px}
+.admin-ui>.app-header{--sidebar-width:265px}
+.admin-ui .app-content,.admin-ui .admin-sidebar{
+ --grtc-heading:#16374B;--grtc-primary:#006BA6;--grtc-primary-hover:#005786;--grtc-text:#334B5C;--grtc-muted:#637588;--grtc-border:#CAD6DE;--grtc-border-soft:#E1E8ED;--grtc-tint:#EEF5F8;--grtc-surface:#F5F7F9;--grtc-focus:#006BA6;
+}
+.admin-ui.management-shell .app-content{padding:var(--admin-space) max(var(--admin-space),calc((100% - var(--admin-max-width))/2)) !important;background:#F5F7F9 !important;scrollbar-gutter:stable;isolation:auto;container-type:normal}
+.admin-ui.management-shell .app-content::before,.admin-ui.management-shell .app-content::after{content:none !important}
+.admin-ui .app-content>:not(dialog){min-width:0}
+.admin-ui .app-content .complaint-page-body{padding:0 !important;flex:1;min-height:0}
+.admin-ui .app-content.complaint-content-shell{display:flex;flex-direction:column;gap:20px}
+.admin-ui .complaint-banner{background:none;margin:0;padding:0;border:0;box-shadow:none}
+.admin-ui .complaint-banner>img{display:none}
+.admin-ui .complaint-banner-copy{position:static;max-width:none;padding:0;display:block}
+.admin-ui .complaint-banner h1,.admin-ui .fleet-list h1,.admin-ui .members-heading h1,.admin-ui .operations-heading h1,.admin-ui .registration-page h1,.admin-ui .fleet-detail h1{font-size:32px !important;line-height:1.25;margin:0 0 8px;color:#16374B !important}
+.admin-ui .complaint-banner p,.admin-ui .fleet-heading p,.admin-ui .members-heading p,.admin-ui .operations-description{font-size:15px !important;line-height:1.5;color:#637588;margin:0}
+.admin-ui .complaint-banner br{display:none}
+.admin-ui .fleet-list{gap:20px;min-height:620px}
+.admin-ui .fleet-heading{flex-shrink:0}
+.admin-ui .fleet-summary{gap:16px}
+.admin-ui .fleet-summary .summary-filter{min-height:92px;padding:16px;gap:12px;border:1px solid #DAE3E9 !important;border-radius:10px;background:#fff !important;box-shadow:none !important}
+.admin-ui .fleet-summary .summary-filter:hover{border-color:#62B5D4 !important;background:#F8FBFD !important}
+.admin-ui .fleet-summary .summary-filter.active{border-color:#006BA6 !important;background:#EEF5F8 !important;box-shadow:none !important}
+.admin-ui .fleet-summary strong{color:#16374B;font-size:28px}
+.admin-ui .fleet-summary p{font-size:14px;color:#637588;margin-bottom:5px}
+.admin-ui .fleet-summary .summary-icon{width:36px;height:36px;border-radius:8px;color:#006BA6 !important;background:#EEF5F8 !important}
+.admin-ui .fleet-summary [data-tone=green] .summary-icon{color:#557A29 !important;background:#F0F5E8 !important}
+.admin-ui .fleet-summary [data-tone=orange] .summary-icon{color:#95621C !important;background:#FBF5EB !important}
+.admin-ui .fleet-summary [data-tone=red] .summary-icon{color:#A33D4D !important;background:#FAF0F2 !important}
+.admin-ui .app-content :is(.dashboard-card,.complaint-card,.detail-card,.registration-card,.member-summary,.member-edit-card,.member-list-card){border:1px solid #DAE3E9 !important;border-radius:12px;background:#fff !important;box-shadow:0 2px 6px rgba(22,55,75,.025) !important}
+.admin-ui .app-content .dashboard-card:hover,.admin-ui .app-content .dashboard-card:focus-within{transform:none;border-color:#9FBFCC !important;box-shadow:0 2px 8px rgba(22,55,75,.05) !important}
+.admin-ui .app-content .complaint-official-answer{border-left:3px solid #006BA6 !important;background:#F7FAFC !important}
+.admin-ui .app-content :is(.fleet-table,.list-table-wrap){background:#fff;border:1px solid #DAE3E9;border-radius:10px;box-shadow:none}
+.admin-ui .app-content .member-list-card{box-shadow:none !important}
+.admin-ui .app-content table{font-size:14px}
+.admin-ui .app-content table thead th{background:#EDF2F5 !important;color:#294A60 !important;font-size:13px;height:42px;border-bottom:1px solid #DAE3E9}
+.admin-ui .app-content table td{border-color:#E6ECF0;color:#334B5C}
+.admin-ui .app-content table tbody tr:hover{background:#F5F9FC !important}
+.admin-ui .app-content :is(.fleet-search,.list-search,.member-search){gap:10px}
+.admin-ui .app-content :is(.fleet-search,.list-search,.member-search,.member-field,.registration-grid,.answer-form) :is(input,select,textarea){border-color:#CAD6DE;border-radius:6px;color:#334B5C;background:#fff}
+.admin-ui .app-content :is(button,a.register-button,a.member-save):not(dialog *):not(.text-button):not(.detail-button):not(.clear-date){box-shadow:none !important;translate:none !important}
+.admin-ui .sidebar-toggle{box-shadow:none !important;translate:none !important}
+.admin-ui .app-content :is(.primary,.register,.search-button,.register-button,.member-save,.member-search button,.answer-form button):not(dialog *){background:#006BA6 !important;border-color:#006BA6 !important;color:#fff !important;border-radius:6px}
+.admin-ui .app-content :is(.primary,.register,.search-button,.register-button,.member-save,.member-search button,.answer-form button):not(dialog *):hover{background:#005786 !important;border-color:#005786 !important}
+.admin-ui .app-content :is(.number-pagination button[aria-current=page],.list-pagination button.active){background:#006BA6;border-color:#006BA6;color:white}
+.admin-ui .app-content :is(.fleet-badge[data-tone=green],.status-badge[data-status=ANSWERED]){background:#EEF4E5 !important;color:#4E7429 !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=blue],.status-badge[data-status=TRANSFERRED]){background:#EAF3F9 !important;color:#006BA6 !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=orange],.status-badge[data-status=RECEIVED]){background:#F9F2E6 !important;color:#90601B !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=red],.status-badge[data-status=WAITING]){background:#F9EDF0 !important;color:#A33D4D !important}
+.admin-ui .type-badge{background:#EEF4F7 !important;color:#466D82 !important}
+.admin-ui .app-content .dashboard-icon{color:#006BA6 !important;background:#EEF5F8 !important;border-radius:8px}
+.admin-ui .app-content .vehicle-card .dashboard-icon,.admin-ui .app-content .answer-card .dashboard-icon{color:#557A29 !important;background:#F0F5E8 !important}
+.admin-ui .app-content .dispatch-card .dashboard-icon{color:#2589AB !important;background:#EFF7FA !important}
+.admin-ui .admin-sidebar{background:#fff !important;border-right:1px solid #E1E8ED}
+.admin-ui .admin-menu{padding:20px 12px;display:flex;flex-direction:column;gap:6px}
+.admin-ui .admin-menu a{min-height:44px;margin-right:0;border-radius:6px;font-size:16px;justify-content:flex-start;padding:0 16px;color:#637588}
+.admin-ui .admin-menu a.selected{color:#006BA6}
+.admin-ui .admin-menu a::before{width:3px;border-radius:2px}
+.admin-ui .menu-background::before{background:#EDF4F8 !important}
+.admin-ui .admin-menu a:not(.selected):hover{transform:none;background:#F5F7F9}
+.admin-ui .admin-sidebar-bottom{background:none !important}
+.admin-ui .admin-profile{margin:0 12px 16px;border:1px solid #E1E8ED;border-radius:8px;padding:12px;min-height:68px}
+.admin-ui .profile-identity strong{font-size:15px}
+.admin-ui .operations-heading{padding:0}
+.admin-ui .operations-page{min-height:calc(100dvh - 118px)}
+.admin-ui .operations-page .city-scenery{display:none}
+.admin-ui .operation-route{max-width:1520px;margin-inline:auto}
+.admin-ui .route-scroll{min-width:0}
+.admin-ui .members-heading{margin-bottom:20px}
+.admin-ui .member-list-page{gap:16px;height:100%;min-height:600px}
+.admin-ui .member-list-page .members-heading{margin:0}
+.admin-ui .member-type-filter button[aria-pressed=true]{background:#EEF5F8;border-color:#006BA6;color:#006BA6}
+/* Restore inherited tokens inside existing dialogs; popup appearance remains unchanged. */
+.admin-ui .app-content dialog{--grtc-heading:#124675;--grtc-primary:#007AC2;--grtc-primary-hover:#0063A3;--grtc-text:#293E52;--grtc-muted:#526A7D;--grtc-border:#ADCFE4;--grtc-border-soft:#D1E6F2;--grtc-tint:#E5F6FF;--grtc-surface:#F2FAFF;--grtc-focus:#008EE0}
+@media(max-width:1400px){.admin-ui{--admin-space:20px}.admin-ui .fleet-summary{gap:12px}.admin-ui .fleet-list{gap:16px}.admin-ui .fleet-summary .summary-filter{min-height:80px;padding:12px}}
+@media(max-width:1100px){.admin-ui .fleet-list,.admin-ui .member-list-page{height:auto;min-height:0}.admin-ui .fleet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-ui .member-list-page .member-list-card{flex:none}.admin-ui .member-table{height:auto}.admin-ui .app-content{overflow:auto}}
+@media(max-width:700px){.admin-ui{--admin-space:16px;--sidebar-width:220px}.admin-ui .fleet-summary{grid-template-columns:1fr 1fr}.admin-ui .fleet-list h1,.admin-ui .members-heading h1,.admin-ui .operations-heading h1,.admin-ui .complaint-banner h1{font-size:28px !important}.admin-ui .operations-heading{flex-wrap:wrap}.admin-ui .fleet-search .keyword{min-width:0}.admin-ui .member-list-name img{width:32px;height:32px}}
+
+/* Keep every row reachable when the available viewport height is limited. */
+.admin-ui .app-content .fleet-table,.admin-ui .app-content .member-list-card,.admin-ui .app-content .list-table-wrap{overflow:auto;min-height:0}
+.admin-ui .app-content .fleet-table table{min-width:640px}
+.admin-ui .app-content .fleet-table table.dispatch-table{min-width:900px}
+.admin-ui .app-content .member-table{min-width:640px}
+.admin-ui .app-content .list-table{min-width:760px}
+
+/* Compact administrator navigation; complaints retain the fixed expanded sidebar. */
+.admin-ui .sidebar-control{display:flex;align-items:center;justify-content:space-between;min-height:64px;padding:0 20px;color:#637588;font-size:12px;font-weight:600}
+.admin-ui .sidebar-control button{display:grid;place-items:center;width:32px;height:32px;border:1px solid #DAE3E9;border-radius:7px;color:#637588;background:white;flex-shrink:0}
+.admin-ui .sidebar-control button:hover{background:#EEF5F8;color:#006BA6}
+.admin-ui .sidebar-control button:focus-visible{outline:2px solid #006BA6;outline-offset:2px}
+.admin-ui .admin-menu{padding-top:12px;gap:6px}
+.admin-ui .menu-icon{position:relative;z-index:2;flex-shrink:0}
+.admin-ui .admin-menu a{gap:12px;white-space:nowrap}
+.admin-ui .admin-sidebar.sidebar-compact{overflow-x:hidden}
+.admin-ui .sidebar-compact .sidebar-control{justify-content:center;padding-inline:0}
+.admin-ui .sidebar-compact .admin-menu{padding-inline:10px}
+.admin-ui .sidebar-compact .admin-menu a{padding-inline:0;justify-content:center;gap:0;height:48px}
+.admin-ui .sidebar-compact .menu-label{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.admin-ui .sidebar-compact .admin-profile{margin:0 8px 16px;padding:8px 0;min-height:56px;justify-content:center;border-color:transparent}
+.admin-ui .sidebar-compact .profile-identity,.admin-ui .sidebar-compact .profile-settings,.admin-ui .sidebar-compact .profile-settings-link{display:none}
+.admin-ui .sidebar-compact .profile-avatar{width:36px;height:36px}
+html.character-cursor .admin-ui,html.character-cursor .admin-ui *:not(dialog):not(dialog *){cursor:auto !important}
+html.character-cursor .admin-ui :is(a,button,select,[role=button]):not(dialog *),html.character-cursor .admin-ui :is(a,button,[role=button]):not(dialog *) *{cursor:pointer !important}
+html.character-cursor .admin-ui :is(input,textarea,[contenteditable=true]):not(dialog *){cursor:text !important}
+html.character-cursor .admin-ui :is(:disabled,[aria-disabled=true]):not(dialog *){cursor:not-allowed !important}
+@media(prefers-reduced-motion:reduce){.admin-ui .admin-sidebar{transition:none !important}}
+
+/* Corporate admin palette: logo blue with stronger blue shades, white surfaces. */
+.admin-ui .app-content,.admin-ui .admin-sidebar{--grtc-heading:#123B5D;--grtc-primary:#006BA6;--grtc-primary-hover:#005385;--grtc-text:#263F52;--grtc-muted:#536879;--grtc-border:#B9CDDD;--grtc-border-soft:#DFE8EF;--grtc-tint:#FFFFFF;--grtc-surface:#FFFFFF}
+.admin-ui.management-shell .app-content{background:#FFFFFF !important}
+.admin-ui>.app-header{background:#FFFFFF !important;box-shadow:none !important}
+.admin-ui>.app-header .header-session button{box-shadow:none !important}
+.admin-ui .admin-sidebar{background:#064475 !important;border-right:1px solid #064475}
+.admin-ui .admin-menu a{color:#E1ECF6;font-weight:600}
+.admin-ui .admin-menu a.selected{color:#FFFFFF;font-weight:800}
+.admin-ui .admin-menu a.selected::before{background:#57C9ED}
+.admin-ui .menu-background::before{background:#087EC1 !important}
+.admin-ui .admin-menu a:not(.selected):hover{background:#0D5688;color:white}
+.admin-ui .sidebar-control{color:#C5DDEF}
+.admin-ui .sidebar-control button{background:#105484;border-color:#36729C;color:white;box-shadow:none !important}
+.admin-ui .sidebar-control button:hover{background:#087EC1;color:white}
+.admin-ui .admin-menu a:focus-visible,.admin-ui .sidebar-control button:focus-visible{outline-color:#57C9ED}
+.admin-ui .admin-profile{background:#FFFFFF;border-color:#FFFFFF}
+.admin-ui .sidebar-compact .admin-profile{background:transparent}
+.admin-ui .app-content table thead th{background:#006BA6 !important;color:#FFFFFF !important;border-bottom-color:#005385}
+.admin-ui .app-content table tbody tr{background:#FFFFFF}
+.admin-ui .app-content table td{border-color:#D9E4EC}
+.admin-ui .app-content table tbody tr:hover{background:#F5F9FC !important}
+.admin-ui .fleet-summary .summary-filter{background:white !important;border-color:#B9CDDD !important;box-shadow:none !important}
+.admin-ui .fleet-summary .summary-filter.active{background:white !important;border-color:#006BA6 !important;box-shadow:inset 0 3px 0 #006BA6 !important}
+.admin-ui .fleet-summary strong{color:#006BA6}
+.admin-ui .fleet-summary .summary-icon{background:white !important;color:#006BA6 !important}
+.admin-ui .app-content .dashboard-icon{background:white !important;color:#006BA6 !important}
+.admin-ui .app-content .vehicle-card .dashboard-icon,.admin-ui .app-content .answer-card .dashboard-icon{background:white !important;color:#005385 !important}
+.admin-ui .app-content .dispatch-card .dashboard-icon{background:white !important;color:#168EC8 !important}
+.admin-ui .member-type-filter button[aria-pressed=true]{background:#006BA6;color:white;border-color:#006BA6}
+.admin-ui .app-content :is(.fleet-badge[data-tone=green],.status-badge[data-status=ANSWERED]){background:#147D52 !important;color:white !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=blue],.status-badge[data-status=TRANSFERRED]){background:#007BB8 !important;color:white !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=orange],.status-badge[data-status=RECEIVED]){background:#B96A0E !important;color:white !important}
+.admin-ui .app-content :is(.fleet-badge[data-tone=red],.status-badge[data-status=WAITING]){background:#BA3550 !important;color:white !important}
+.admin-ui .app-content .status-badge[data-status=WITHDRAWN]{background:#536879 !important;color:white !important}
+.admin-ui .app-content .type-badge{background:white !important;color:#006BA6 !important;border:1px solid #8DBBD5}
+.admin-ui .app-content :is(.dashboard-card,.complaint-card,.detail-card,.registration-card,.member-summary,.member-edit-card,.member-list-card){box-shadow:none !important}
+
+/* Header-free administrator shell. */
+.admin-ui.management-shell .app-content{background:#F3F7FB !important}
+.admin-ui .admin-sidebar{background:#FFFFFF !important;border-right:1px solid #DFE8EF}
+.admin-ui .sidebar-brand{display:flex;align-items:center;justify-content:center;height:76px;min-height:76px;padding:16px 18px;box-sizing:border-box;overflow:hidden}
+.admin-ui .sidebar-brand img{display:block;width:100%;height:auto;max-width:204px}
+.admin-ui .sidebar-compact .sidebar-brand{padding:20px 6px;height:64px;min-height:64px}
+.admin-ui .sidebar-control{min-height:48px;color:#536879}
+.admin-ui .sidebar-control button{background:#FFFFFF;border-color:#B9CDDD;color:#006BA6}
+.admin-ui .sidebar-control button:hover{background:#006BA6;color:#FFFFFF}
+.admin-ui .admin-menu a{color:#536879}
+.admin-ui .admin-menu a.selected{color:#FFFFFF}
+.admin-ui .menu-background::before{background:#006BA6 !important}
+.admin-ui .admin-menu a:not(.selected):hover{background:#F3F7FB;color:#006BA6}
+.admin-ui .sidebar-session{padding:0 12px 12px}
+.admin-ui .sidebar-session button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:38px;border:1px solid #B9CDDD;border-radius:6px;background:#FFFFFF;color:#006BA6;font:inherit;font-size:13px;font-weight:600}
+.admin-ui .sidebar-session button:hover{background:#F3F7FB}
+.admin-ui .sidebar-session p{font-size:12px;color:#BA3550;overflow-wrap:anywhere}
+.admin-ui .sidebar-compact .sidebar-session{padding:0 10px 12px}
+.admin-ui .sidebar-brand:focus-visible,.admin-ui .sidebar-session button:focus-visible{outline:2px solid #006BA6;outline-offset:-2px}
+.admin-ui .sidebar-compact .admin-profile{background:#FFFFFF}
+.admin-ui .operations-page{min-height:calc(100dvh - 48px)}
+
+/* Deep navigation with a soft profile surface. */
+.admin-ui .admin-sidebar{background:#083F6B !important;border-right-color:#083F6B}
+.admin-ui .sidebar-brand{background:#FFFFFF}
+.admin-ui .admin-menu a{color:#DDEAF5}
+.admin-ui .admin-menu a.selected{color:#FFFFFF}
+.admin-ui .menu-background::before{background:#087EC1 !important}
+.admin-ui .admin-menu a:not(.selected):hover{background:#145783;color:#FFFFFF}
+.admin-ui .sidebar-control{color:#C7DCED}
+.admin-ui .sidebar-control button{background:#155782;border-color:#3C7399;color:#FFFFFF}
+.admin-ui .sidebar-control button:hover{background:#087EC1;color:#FFFFFF}
+.admin-ui .admin-profile,.admin-ui .sidebar-compact .admin-profile{background:#EAF1F7;border-color:#D4E2EE}
+.admin-ui .profile-identity strong{color:#123B5D}
+.admin-ui .profile-identity span{color:#536879}
+.admin-ui .sidebar-session button{background:#155782;border-color:#3C7399;color:#FFFFFF}
+.admin-ui .sidebar-session button:hover{background:#087EC1}
+
+
+/* White administrator sidebar. */
+.admin-ui .admin-sidebar{background:#FFFFFF !important;border-right-color:#DFE8EF}
+.admin-ui .admin-menu a{color:#536879}
+.admin-ui .admin-menu a.selected{color:#FFFFFF}
+.admin-ui .menu-background::before{background:#006BA6 !important}
+.admin-ui .admin-menu a:not(.selected):hover{background:#F3F7FB;color:#006BA6}
+.admin-ui .sidebar-control{color:#536879}
+.admin-ui .sidebar-control button,.admin-ui .sidebar-session button{background:#FFFFFF;border-color:#B9CDDD;color:#006BA6}
+.admin-ui .sidebar-control button:hover,.admin-ui .sidebar-session button:hover{background:#006BA6;color:#FFFFFF}
+
+/* Smaller sidebar logo, preserving the original proportions. */
+.admin-ui .sidebar-brand img{width:85%;max-width:170px;height:auto}
+.admin-ui .sidebar-compact .sidebar-brand img{width:100%;max-width:54px}
+
+/* Stable dimensions for the four administrator list screens. */
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap){width:100%;box-sizing:border-box;align-self:stretch;scrollbar-gutter:stable;min-height:260px}
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap) table{width:100%;height:auto !important;table-layout:fixed}
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap) th{height:44px !important;padding:8px 12px;box-sizing:border-box}
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap) td{height:48px !important;padding:6px 12px !important;box-sizing:border-box;vertical-align:middle}
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap) .empty-result{height:48px !important}
+@media(min-width:1101px){
+.admin-ui .app-content .fleet-list,.admin-ui .app-content .member-list-page:not(:has(.member-info-panel)){display:grid;height:100%;min-height:640px;grid-template-rows:64px 104px 42px minmax(260px,1fr) 34px;gap:16px;align-content:stretch}
+.admin-ui .fleet-list .fleet-heading,.admin-ui .member-list-page .members-heading{grid-row:1;margin:0}
+.admin-ui .fleet-list .fleet-summary{grid-row:2}
+.admin-ui .fleet-list .fleet-search,.admin-ui .member-list-page:not(:has(.member-info-panel)) .member-search{grid-row:3;margin:0}
+.admin-ui .fleet-list .fleet-table,.admin-ui .member-list-page:not(:has(.member-info-panel)) .member-list-card{grid-row:4}
+.admin-ui .fleet-list .number-pagination,.admin-ui .member-list-page:not(:has(.member-info-panel)) .number-pagination{grid-row:5;margin:0}
+.admin-ui .member-list-page:not(:has(.member-info-panel)) .member-type-filter{grid-row:2;margin:0;align-self:end;padding-bottom:16px}
+.admin-ui .app-content.complaint-content-shell:has(.list-page-body){display:grid;grid-template-rows:64px minmax(0,1fr);gap:16px}
+.admin-ui .list-page-body .complaint-list{display:grid;height:100%;min-height:560px;grid-template-rows:104px 42px minmax(260px,1fr) 34px;gap:16px}
+.admin-ui .list-page-body .list-search{grid-row:2}
+.admin-ui .list-page-body .list-table-wrap{grid-row:3}
+.admin-ui .list-page-body .list-pagination{grid-row:4;margin:0}
+.admin-ui .list-page-body .list-notice{grid-row:1;align-self:end}
+}
+@media(max-width:1100px){.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap){height:560px;flex:none}}
+
+.admin-ui.management-shell .app-content.dashboard-content-shell{background:#E7EEF6 !important}
+
+.admin-ui .sidebar-session .sidebar-members-link{font-family:inherit;font-size:13px;font-weight:600;line-height:normal}

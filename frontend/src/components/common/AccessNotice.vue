@@ -23,16 +23,16 @@ function previous() {
 </script>
 <template><section class="access-notice" aria-labelledby="access-title"><div class="access-copy"><img :src="lock" alt="잠금 장치와 광주교통공사 캐릭터" /><span class="access-badge">{{ copy.badge }}</span><h2 id="access-title">{{ copy.title }}</h2><p>{{ copy.lines[0] }}<br />{{ copy.lines[1] }}</p></div><div class="access-actions"><button type="button" @click="previous">이전 페이지</button></div></section></template>
 <style scoped>
-.access-notice { min-height: 100%; display: flex; flex-direction: column; gap: 8px; justify-content: center; color: #064b76; }
+.access-notice { min-height: 100%; display: flex; flex-direction: column; gap: 8px; justify-content: center; color: var(--grtc-heading); }
 .access-copy { flex: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
 .access-copy img { width: min(660px, 85%); max-height: min(320px, 30dvh); object-fit: contain; height: auto; }
-.access-badge { padding: 7px 18px; border-radius: 20px; background: #e9f5fc; color: #087bb4; font-size: 16px; font-weight: 700; }
+.access-badge { padding: 7px 18px; border-radius: 20px; background: var(--grtc-tint); color: var(--grtc-primary); font-size: 16px; font-weight: 700; }
 .access-copy h2 { margin: 0; font-size: 38px; font-weight: 800; line-height: 1.35; }
-.access-copy p { margin: 0; color: #7b858e; font-size: 20px; line-height: 1.5; }
+.access-copy p { margin: 0; color: var(--grtc-muted); font-size: 20px; line-height: 1.5; }
 .access-actions { display: flex; justify-content: flex-end; margin-top: 0; }
-.access-actions button { min-height: 48px; padding: 0 28px; border: 0; border-radius: 10px; background: #086b9f; color: white; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; transition: background-color 200ms ease-out; }
-.access-actions button:hover { background: #064b76; }
-.access-actions button:focus-visible { outline: 3px solid #3298db; outline-offset: 3px; }
+.access-actions button { min-height: 48px; padding: 0 28px; border: 0; border-radius: 10px; background: var(--grtc-primary); color: white; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; transition: background-color 200ms ease-out; }
+.access-actions button:hover { background: var(--grtc-heading); }
+.access-actions button:focus-visible { outline: 3px solid var(--grtc-focus); outline-offset: 3px; }
 @media (min-width:1001px) and (max-height:850px) {
  .access-copy { gap: 8px; }
  .access-copy img { width: min(620px,85%); max-height: 235px; }

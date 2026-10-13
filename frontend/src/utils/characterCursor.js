@@ -1,6 +1,7 @@
 export function installCursorPressState(root, target, windowTarget) {
   const reset = () => root.classList.remove('character-cursor-pressed')
   const down = (event) => {
+    if (event.target?.closest?.('.admin-ui') && !event.target.closest('dialog')) { reset(); return }
     if (event.button === 0 && event.pointerType !== 'touch') root.classList.add('character-cursor-pressed')
   }
   const move = (event) => { if (!(event.buttons & 1)) reset() }
