@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch, onBeforeUnmount } from 'vue'
 import {isWithdrawnComplaint} from '../../utils/complaintAccess'
 import StatusBadge from '../common/StatusBadge.vue'
 import { useComplaintList } from '../../composables/useComplaintList'
@@ -6,17 +7,34 @@ import { complaintTypes,complaintLabel } from '../../mocks/complaintForm'
 import { complaintNotice } from '../../mocks/complaints'
 import { getComplaintOptions } from '../../services/complaintOptions'
 const {statuses:complaintStatuses}=getComplaintOptions()
-const props=defineProps({admin:Boolean,pageSize:{type:Number,default:10}})
-const {draft,page,rows,pages,totalPages,selected,allSelected,search,move,selectAll,error}=useComplaintList({pageSize:props.pageSize})
+const props=defineProps({admin:Boolean,autoPageSize:Boolean,pageSize:{type:Number,default:10}})
+const {draft,page,size,rows,pages,totalPages,selected,allSelected,search,move,selectAll,error}=useComplaintList({pageSize:props.pageSize})
 // `mine` is supplied by the real list API; never infer ownership from status/name.
 const detail=complaint=>!isWithdrawnComplaint(complaint)&&!props.admin&&complaint.mine===false
  ? {name:'forbidden',query:{reason:'ownership'}}
  : (props.admin?'/dashboard/complaints/':'/complaints/')+complaint.id
+const tableViewport=ref(null)
+let listObserver,measureFrame
+function fitRows(){
+ const viewport=tableViewport.value
+ if(!props.autoPageSize||!viewport)return
+ const headerHeight=viewport.querySelector('thead')?.getBoundingClientRect().height||44
+ const rowHeight=Math.max(1,viewport.querySelector('tbody tr:not(:has(.empty-result))')?.getBoundingClientRect().height||48)
+ const capacity=Math.max(1,Math.floor((viewport.clientHeight-headerHeight)/rowHeight))
+ if(size.value!==capacity){const firstItem=(page.value-1)*size.value;size.value=capacity;page.value=Math.floor(firstItem/capacity)+1}
+}
+watch(tableViewport,viewport=>{
+ listObserver?.disconnect();cancelAnimationFrame(measureFrame)
+ if(!props.autoPageSize||!viewport)return
+ listObserver=new ResizeObserver(()=>{cancelAnimationFrame(measureFrame);measureFrame=requestAnimationFrame(fitRows)})
+ listObserver.observe(viewport)
+},{flush:'post'})
+onBeforeUnmount(()=>{listObserver?.disconnect();cancelAnimationFrame(measureFrame)})
 </script>
 <template><section class="complaint-list" :class="{'has-notice':!!complaintNotice}">
-<form class="list-search" @submit.prevent="search"><input v-model="draft.keyword" aria-label="검색어" placeholder="민원 제목, 내용, 민원인 검색"/><select v-model="draft.status" aria-label="처리상태"><option value="">전체 상태</option><option v-for="o in complaintStatuses" :value="o.value" :key="o.value">{{o.label}}</option></select><button type="submit" class="search-button">검색</button><RouterLink v-if="!admin" class="register-button" :to="admin?'/dashboard/complaints/new':'/complaints/new'">+ 민원 등록</RouterLink></form>
+<slot name="summary" :draft="draft" :search="search"/><form class="list-search" @submit.prevent="search"><input v-model="draft.keyword" aria-label="검색어" placeholder="민원 제목, 내용, 민원인 검색"/><select v-model="draft.status" aria-label="처리상태"><option value="">전체 상태</option><option v-for="o in complaintStatuses" :value="o.value" :key="o.value">{{o.label}}</option></select><button type="submit" class="search-button">검색</button><RouterLink v-if="!admin" class="register-button" :to="admin?'/dashboard/complaints/new':'/complaints/new'">+ 민원 등록</RouterLink></form>
 <p v-if="error" role="alert">{{error}}</p><p v-if="complaintNotice" class="list-notice" role="status">{{complaintNotice}}</p>
-<div class="list-table-wrap"><table><colgroup><col style="width:56px"/><col style="width:112px"/><col style="width:90px"/><col/><col style="width:130px"/><col style="width:118px"/><col style="width:112px"/></colgroup><thead><tr><th>번호</th><th>접수일자</th><th>민원유형</th><th class="title-cell">제목</th><th>민원인</th><th>처리상태</th><th>관리</th></tr></thead><tbody><tr v-for="(c, index) in rows" :key="c.id"><td>{{(page - 1) * pageSize + index + 1}}</td><td>{{c.receivedAt?.replaceAll('-','.')||'—'}}</td><td><span class="type-badge" :data-type="c.type">{{c.typeLabel || complaintLabel(complaintTypes,c.type)}}</span></td><td class="title-cell"><RouterLink :to="detail(c)">{{c.title}}</RouterLink></td><td>{{c.authorName}}</td><td><StatusBadge :status="c.status" :label="c.statusLabel"/></td><td><RouterLink class="detail-link" :to="detail(c)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>상세보기</RouterLink></td></tr><tr v-if="!rows.length"><td colspan="7" class="empty-result">검색 결과가 없습니다.</td></tr></tbody></table></div>
+<div ref="tableViewport" class="list-table-wrap"><table><colgroup><col style="width:56px"/><col style="width:112px"/><col style="width:90px"/><col/><col style="width:130px"/><col style="width:118px"/><col style="width:112px"/></colgroup><thead><tr><th>번호</th><th>접수일자</th><th>민원유형</th><th class="title-cell">제목</th><th>민원인</th><th>처리상태</th><th>관리</th></tr></thead><tbody><tr v-for="(c, index) in rows" :key="c.id"><td>{{(page - 1) * size + index + 1}}</td><td>{{c.receivedAt?.replaceAll('-','.')||'—'}}</td><td><span class="type-badge" :data-type="c.type">{{c.typeLabel || complaintLabel(complaintTypes,c.type)}}</span></td><td class="title-cell"><RouterLink :to="detail(c)">{{c.title}}</RouterLink></td><td>{{c.authorName}}</td><td><StatusBadge :status="c.status" :label="c.statusLabel"/></td><td><RouterLink class="detail-link" :to="detail(c)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>상세보기</RouterLink></td></tr><tr v-if="!rows.length"><td colspan="7" class="empty-result">검색 결과가 없습니다.</td></tr></tbody></table></div>
 <nav class="list-pagination" aria-label="민원 페이지 이동"><button :disabled="page===1" @click="move(page-1)">이전</button><button v-for="p in pages" :key="p" :class="{active:page===p}" :aria-current="page===p?'page':undefined" @click="move(p)">{{p}}</button><button :disabled="page===totalPages" @click="move(page+1)">다음</button></nav>
 </section></template>
 <style scoped>

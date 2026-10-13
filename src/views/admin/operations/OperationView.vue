@@ -1,5 +1,5 @@
 <script setup>
-import pin from '../../../assets/operations/pin.webp'
+
 import duck from '../../../assets/operations/duck.webp'
 import rabbit from '../../../assets/operations/rabbit.webp'
 import star from '../../../assets/operations/star.webp'
@@ -17,7 +17,7 @@ const stations = [first, second, third].flatMap((row, r) => row.map((lines, i) =
   <section class="operations-page" aria-labelledby="operations-title">
     <header class="operations-heading">
       <div><h1 id="operations-title">노선도</h1><p class="operations-description">노선과 역 정보를 확인하고 운행 현황을 한눈에 살펴볼 수 있습니다.</p></div>
-      <img class="destination-legend" :src="pin" alt="목적지 범례: 평동행, 소태행, 녹동행" />
+      
     </header>
     <div class="route-scroll" tabindex="0" role="region" aria-label="광주 도시철도 1호선 노선도, 좁은 화면에서 가로 스크롤 가능">
       <svg v-once class="operation-route" viewBox="0 0 1400 565" role="img" aria-labelledby="route-title route-description">

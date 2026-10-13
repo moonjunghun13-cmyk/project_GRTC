@@ -1,0 +1,65 @@
+/* Cross-page responsive corrections. Desktop component designs remain local. */
+.management-shell .app-body{min-height:0}
+.management-shell .app-content{min-width:0}
+.management-shell :is(.fleet-table,.member-list-card,.list-table-wrap,.board-table-scroll,.route-scroll){min-width:0;max-width:100%;box-sizing:border-box;overflow-x:auto}
+.management-shell :is(.fleet-heading,.members-heading,.member-panel-heading,.operations-heading,.editor-heading,.detail-heading){min-width:0}
+.management-shell :is(.member-panel,.member-summary,.registration-page,.complaint-write-page,.information-board){min-width:0;box-sizing:border-box}
+@media(max-width:1100px){
+ .admin-ui.management-shell{--admin-space:20px}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search){flex-wrap:wrap}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search) :is(input,select){min-width:0;max-width:100%}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search) :is(.keyword,.search-input){flex:1 1 240px;min-width:0}
+ .management-shell :is(.fleet-heading,.members-heading,.operations-heading){flex-wrap:wrap;gap:14px}
+ .admin-ui .app-content :is(.fleet-list,.member-list-page){min-height:0}
+ .management-shell .board-detail{min-height:240px}
+}
+@media(max-width:700px){
+ /* Retain the administrator icon rail; an expanded menu overlays narrow content. */
+ .admin-ui.management-shell{--admin-space:12px;--sidebar-width:220px}
+ .admin-ui.management-shell .app-body.collapsible-body{grid-template-columns:72px minmax(0,1fr) !important;position:relative}
+ .admin-ui.management-shell .collapsible-body.sidebar-expanded>.admin-sidebar{position:absolute;inset:0 auto 0 0;height:100%;z-index:40;box-shadow:8px 0 24px rgba(22,55,75,.14)}
+ .admin-ui .app-content :is(.fleet-summary,.registration-grid,.complaint-edit-fields){grid-template-columns:minmax(0,1fr)}
+ .admin-ui .app-content .fleet-list{gap:16px}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search){gap:8px}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search)>input{flex:1 1 100%;width:100%;min-width:0}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search)>select{flex:1 1 140px;max-width:100%;min-width:0}
+ .management-shell :is(.fleet-search,.list-search,.member-search,.board-search)>button{flex-shrink:0}
+ .management-shell :is(.board-heading,.citizen-list-heading){min-height:130px}
+ .management-shell :is(.board-heading,.citizen-list-heading)>div:last-child{max-width:75%}
+ .management-shell :is(.board-heading,.citizen-list-heading) h1{overflow-wrap:anywhere}
+ .management-shell :is(.editor-heading,.detail-heading,.list-heading){flex-wrap:wrap;height:auto;min-height:60px}
+ .management-shell .list-heading-actions{gap:8px;flex-wrap:wrap}
+ .management-shell :is(.registration-card,.member-edit-card,.member-summary){padding:16px}
+ .management-shell .registration-grid{grid-template-columns:minmax(0,1fr)}
+ .management-shell :is(.registration-intro,.complaint-detail-heading){flex-wrap:wrap}
+ .management-shell :is(.registration-page,.complaint-write-page) footer{flex-wrap:wrap}
+ /* Citizen menus sit above the content on phones and keep existing collapse controls. */
+ .management-shell:not(.admin-ui) .app-body:not(.help-sidebar-closed){grid-template-columns:minmax(0,1fr) !important;grid-template-rows:auto minmax(0,1fr)}
+ .management-shell:not(.admin-ui) .app-body>.admin-sidebar{grid-column:1;grid-row:1;max-height:200px;min-width:0;overflow:auto}
+ .management-shell:not(.admin-ui) .app-body>.app-content{grid-column:1;grid-row:2;min-height:0}
+ .management-shell:not(.admin-ui) .admin-menu{padding:8px;display:flex;flex-wrap:wrap;gap:6px}
+ .management-shell:not(.admin-ui) .admin-menu>a,.management-shell:not(.admin-ui) .citizen-menu-parent{font-size:15px;min-height:38px;padding:0 14px;margin:0;border-radius:8px}
+ .management-shell:not(.admin-ui) .citizen-menu-group{margin:0}
+ .management-shell:not(.admin-ui) .admin-character{display:none}
+ .management-shell:not(.admin-ui) .admin-profile{min-height:0;padding:8px 12px;margin-bottom:8px}
+ .management-shell:not(.admin-ui) .app-header.admin-header{padding-right:12px;gap:8px}
+ .management-shell:not(.admin-ui) .app-header.admin-header>a:first-of-type{width:180px}
+ .management-shell:not(.admin-ui) .header-session button{font-size:13px;padding:8px 12px}
+ .management-shell:not(.admin-ui) .complaint-page-body{min-width:0}
+}
+@media(max-width:420px){
+ .management-shell .list-search .register-button{flex:1;min-width:0}
+ .admin-ui .dashboard-card-heading>div{min-width:0}
+ .admin-ui .dashboard-card-heading h2{font-size:15px}
+ .management-shell .profile-identity strong{font-size:15px}
+}
+@media(max-height:700px) and (min-width:701px){
+ .admin-ui .dashboard-frame{flex:none;height:auto;min-height:0;grid-auto-rows:350px;grid-template-rows:none}
+ .admin-ui .dashboard-frame.widgets-one{grid-template-rows:450px}
+ .admin-ui .app-content{overflow:auto}
+}
+@media(max-width:420px){
+.management-shell .list-search .register-button{flex:1 1 100%;width:100%;box-sizing:border-box}
+.management-shell .list-search select{flex:1 1 140px;width:auto}
+.management-shell .board-search>button:last-child:not(:nth-child(3)){flex:1 1 100%}
+}

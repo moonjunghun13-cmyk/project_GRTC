@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { currentUser } from '../../stores/currentUser'
 import { canAccessAdminPath } from '../../utils/adminAccess'
+import ListSummaryCards from '../../components/admin/ListSummaryCards.vue'
 import { boardExamples } from '../../data/boardExamples'
 import boardBanner from '../../assets/min.png'
 import { Megaphone, FolderOpen, Search, FileText, ArrowLeft, Upload, X } from 'lucide-vue-next'
@@ -26,24 +27,63 @@ function fileSize(bytes){return bytes<1024?bytes+' B':bytes<1024*1024?(bytes/102
 watch(writing,()=>{attachments.value=[];dragging.value=false})
 
 // Preview data is separate from the page so a real provider can replace it later.
-const entries=computed(()=>boardExamples[props.kind]??[])
-const filtered=computed(()=>entries.value.filter(item=>(!category.value||item.category===category.value)&&(!searchTerm.value||[item.title,item.content].some(value=>String(value??'').includes(searchTerm.value)))))
-const page=ref(1),pageSize=5
-const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/pageSize)))
-const visibleEntries=computed(()=>filtered.value.slice((page.value-1)*pageSize,page.value*pageSize))
+const previewBoards=ref(Object.fromEntries(Object.entries(boardExamples).map(([key,items])=>[key,items.map(item=>({...item,attachments:[...item.attachments]}))])))
+const entries=computed(()=>previewBoards.value[props.kind]??[])
+const editingId=ref(null),previewMessage=ref('')
+const summaryItems=computed(()=>[{label:'전체 '+title.value,value:'',count:entries.value.length},...categories.value.map(category=>({label:category,value:category,count:entries.value.filter(item=>item.category===category).length})),{label:'첨부파일 포함',value:'__attachments',count:entries.value.filter(item=>item.attachments?.length).length}])
+const filtered=computed(()=>entries.value.filter(item=>(!category.value||(category.value==='__attachments'?item.attachments?.length:item.category===category.value))&&(!searchTerm.value||[item.title,item.content].some(value=>String(value??'').includes(searchTerm.value)))))
+const selectedEntry=ref(null)
+watch(()=>props.kind,()=>{selectedEntry.value=null})
+const page=ref(1),pageSize=ref(5),tableViewport=ref(null)
+let listObserver,measureFrame
+function fitRows(){
+ const viewport=tableViewport.value
+ if(!viewport)return
+ const header=viewport.querySelector('thead'),row=viewport.querySelector('tbody tr')
+ const rowHeight=Math.max(48,row?.getBoundingClientRect().height||48)
+ const available=viewport.clientHeight-(header?.getBoundingClientRect().height||44)
+ const capacity=Math.max(1,Math.floor(available/rowHeight))
+ if(pageSize.value!==capacity){const firstItem=(page.value-1)*pageSize.value;pageSize.value=capacity;page.value=Math.floor(firstItem/capacity)+1}
+}
+watch(tableViewport,viewport=>{
+ listObserver?.disconnect();cancelAnimationFrame(measureFrame)
+ if(!viewport)return
+ listObserver=new ResizeObserver(()=>{cancelAnimationFrame(measureFrame);measureFrame=requestAnimationFrame(fitRows)})
+ listObserver.observe(viewport)
+},{flush:'post'})
+onBeforeUnmount(()=>{listObserver?.disconnect();cancelAnimationFrame(measureFrame)})
+const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/pageSize.value)))
+const visibleEntries=computed(()=>filtered.value.slice((page.value-1)*pageSize.value,page.value*pageSize.value))
 const pageButtons=computed(()=>{const start=Math.floor((page.value-1)/5)*5+1;return Array.from({length:Math.min(5,totalPages.value-start+1)},(_,i)=>start+i)})
 watch([()=>props.kind,category,searchTerm],()=>{page.value=1})
 watch(()=>props.kind,()=>{keyword.value='';searchTerm.value='';category.value='';writing.value=false;draft.value={title:'',category:'',content:''}})
-function startWriting(){draft.value={title:'',category:categories.value[0],content:''};writing.value=true}
+function startWriting(){editingId.value=null;previewMessage.value='';draft.value={title:'',category:categories.value[0],content:''};writing.value=true}
+function editEntry(entry){
+ if(!props.admin)return
+ editingId.value=entry.id;draft.value={title:entry.title,category:entry.category,content:entry.content};selectedEntry.value=null;writing.value=true;previewMessage.value=''
+}
+function savePreview(){
+ if(!props.admin||!editingId.value)return
+ if(!draft.value.title.trim()||!draft.value.content.trim()){previewMessage.value='제목과 내용을 입력해 주세요.';return}
+ const entry=entries.value.find(item=>item.id===editingId.value)
+ if(!entry)return
+ Object.assign(entry,{title:draft.value.title.trim(),category:draft.value.category,content:draft.value.content.trim(),attachments:[...entry.attachments,...attachments.value.map(item=>({name:item.file.name,file:item.file,previewOnly:true}))]})
+ writing.value=false;selectedEntry.value=entry;editingId.value=null;previewMessage.value='예시 글을 수정했습니다. 서버에는 저장되지 않으며 새로고침하면 원래 데이터로 돌아갑니다.'
+}
+function deleteEntry(entry){
+ if(!props.admin||!window.confirm('이 예시 글을 삭제할까요? 서버 데이터는 변경되지 않으며 새로고침하면 복원됩니다.'))return
+ previewBoards.value[props.kind]=entries.value.filter(item=>item.id!==entry.id);selectedEntry.value=null;writing.value=false;page.value=Math.min(page.value,totalPages.value);previewMessage.value='예시 글을 삭제했습니다. 새로고침하면 복원됩니다.'
+}
+watch(()=>props.kind,()=>{editingId.value=null;previewMessage.value=''})
 </script>
 <template>
- <section class="information-board" :class="{'citizen-board':!admin}" :aria-label="title">
+ <section class="information-board" :class="{'citizen-board':!admin,'admin-board':admin,'board-browsing':admin&&!writing&&!selectedEntry}" :aria-label="title">
   <header class="board-heading" :style="{ '--board-banner': `url(${boardBanner})` }"><div class="board-heading-icon"><component :is="isNotice?Megaphone:FolderOpen" :size="28" /></div><div><p>{{admin?'관리자 게시판':'광주교통공사 안내'}}</p><h1>{{title}}</h1><span>{{isNotice?'광주교통공사의 새로운 소식과 이용 안내를 확인하세요.':'서비스 이용에 필요한 안내 자료와 서식을 확인하세요.'}}</span></div></header>
   
   
-  <section v-if="admin&&writing" class="board-card board-editor" aria-label="게시글 작성">
-   <div class="editor-heading"><h2>{{title}} 작성</h2><button type="button" class="secondary" @click="writing=false"><ArrowLeft :size="16" /> 목록으로</button></div>
-   <form @submit.prevent>
+  <p v-if="previewMessage" role="status" class="draft-notice">{{previewMessage}}</p><section v-if="selectedEntry" class="board-card board-detail" aria-label="게시글 상세보기"><header class="detail-heading"><div><span>{{selectedEntry.category}} · {{selectedEntry.createdAt}}</span><h2>{{selectedEntry.title}}</h2></div><button type="button" class="secondary" @click="selectedEntry=null"><ArrowLeft :size="16" /> 목록으로</button></header><div class="detail-body"><p>{{selectedEntry.content}}</p><section v-if="selectedEntry.attachments.length" class="detail-files"><h3>첨부파일</h3><p v-for="file in selectedEntry.attachments" :key="file.name"><FileText :size="18" /> {{file.name}} <span>(예시 파일 · 다운로드 미지원)</span></p></section></div><footer v-if="admin" class="detail-actions"><button type="button" class="secondary" @click="editEntry(selectedEntry)">수정</button><button type="button" class="secondary delete-preview-button" @click="deleteEntry(selectedEntry)">삭제</button></footer></section><section v-else-if="admin&&writing" class="board-card board-editor" aria-label="게시글 작성">
+   <div class="editor-heading"><h2>{{title}} {{editingId?'수정':'작성'}}</h2><button type="button" class="secondary" @click="writing=false"><ArrowLeft :size="16" /> 목록으로</button></div>
+   <form @submit.prevent="savePreview">
     <label>분류<select v-model="draft.category"><option v-for="option in categories" :key="option">{{option}}</option></select></label>
     <label>제목<input v-model="draft.title" placeholder="제목을 입력해 주세요" maxlength="200" /></label>
     <label>내용<textarea v-model="draft.content" rows="10" placeholder="안내 내용을 입력해 주세요" /></label>
@@ -55,12 +95,12 @@ function startWriting(){draft.value={title:'',category:categories.value[0],conte
      <p class="file-storage-notice">현재는 파일 선택만 가능합니다. 실제 업로드·저장은 서버 연결 후 지원됩니다.</p>
     </section>
     <p class="draft-notice">입력한 내용은 서버에 저장되지 않습니다. 목록으로 돌아가거나 페이지를 떠나면 작성 내용이 유지되지 않습니다.</p>
-    <div class="editor-actions"><button type="button" class="secondary" @click="writing=false">취소</button><button type="button" class="primary" disabled>등록 (서버 연결 예정)</button></div>
+    <div class="editor-actions"><button type="button" class="secondary" @click="writing=false">취소</button><button v-if="editingId" type="submit" class="primary">수정 확인 (미리보기)</button><button v-else type="button" class="primary" disabled>등록 (서버 연결 예정)</button></div>
    </form>
   </section>
   <template v-else>
-   <form class="board-search board-card" @submit.prevent="searchTerm=keyword.trim()"><select v-model="category" aria-label="분류 필터"><option value="">전체 분류</option><option v-for="option in categories" :key="option">{{option}}</option></select><div class="search-input"><Search :size="18" aria-hidden="true"/><input v-model="keyword" :placeholder="title+' 제목 또는 내용 검색'" aria-label="검색어" /></div><button class="primary" type="submit">검색</button><button v-if="admin" class="primary" type="button" @click="startWriting">+ {{title}} 작성</button></form>
-   <div class="board-card board-list"><div class="list-heading"><h2>{{title}} 목록</h2><div class="list-heading-actions"><span>총 {{filtered.length}}건</span><RouterLink v-if="showRouteMap" to="/dashboard/operations" class="resource-map-link">노선도 <span aria-hidden="true">↗</span></RouterLink></div></div><div class="board-table-scroll"><table><thead><tr><th class="number">번호</th><th class="category">분류</th><th>제목</th><th class="date">등록일</th><th v-if="!isNotice" class="file">첨부파일</th></tr></thead><tbody><tr v-if="!filtered.length"><td :colspan="isNotice?4:5"><div class="board-empty"><component :is="isNotice?Megaphone:FolderOpen" :size="44" aria-hidden="true"/><strong>검색 결과가 없습니다</strong><p>검색어 또는 분류를 변경해 주세요.</p></div></td></tr><tr v-for="entry in visibleEntries" :key="entry.id"><td>{{entry.number}}</td><td>{{entry.category}}</td><td>{{entry.title}}</td><td>{{entry.createdAt}}</td><td v-if="!isNotice"><span v-if="entry.attachments?.length" :title="entry.attachments.map(file=>file.name).join(', ')">{{entry.attachments.length}}개 (예시)</span><span v-else>—</span></td></tr></tbody></table></div></div><nav class="board-pagination" aria-label="게시판 페이지 이동"><button type="button" :disabled="page===1" @click="page--">이전</button><button v-for="number in pageButtons" :key="number" type="button" :class="{active:page===number}" :aria-current="page===number?'page':undefined" @click="page=number">{{number}}</button><button type="button" :disabled="page===totalPages" @click="page++">다음</button></nav>
+   <ListSummaryCards v-if="admin" :items="summaryItems" :active-key="category" @select="category=$event.value" :kind="isNotice?'file':'resource'"/><form class="board-search board-card" @submit.prevent="searchTerm=keyword.trim()"><select v-model="category" aria-label="분류 필터"><option value="">전체 분류</option><option v-for="option in categories" :key="option">{{option}}</option><option v-if="admin" value="__attachments">첨부파일 포함</option></select><div class="search-input"><Search :size="18" aria-hidden="true"/><input v-model="keyword" :placeholder="title+' 제목 또는 내용 검색'" aria-label="검색어" /></div><button class="primary" type="submit">검색</button><button v-if="admin" class="primary" type="button" @click="startWriting">+ {{title}} 작성</button><RouterLink v-if="showRouteMap" to="/dashboard/operations" class="resource-map-link">노선도 <span aria-hidden="true">↗</span></RouterLink></form>
+   <div class="board-card board-list"><div class="list-heading"><h2>{{title}} 목록</h2><div class="list-heading-actions"><span>총 {{filtered.length}}건</span></div></div><div ref="tableViewport" class="board-table-scroll"><table><thead><tr><th class="number">번호</th><th class="category">분류</th><th>제목</th><th class="date">등록일</th><th v-if="!isNotice" class="file">첨부파일</th></tr></thead><tbody><tr v-if="!filtered.length"><td :colspan="isNotice?4:5"><div class="board-empty"><component :is="isNotice?Megaphone:FolderOpen" :size="44" aria-hidden="true"/><strong>검색 결과가 없습니다</strong><p>검색어 또는 분류를 변경해 주세요.</p></div></td></tr><tr v-for="entry in visibleEntries" :key="entry.id"><td>{{entry.number}}</td><td>{{entry.category}}</td><td><button type="button" class="board-title-button text-button" @click="selectedEntry=entry">{{entry.title}}</button></td><td>{{entry.createdAt}}</td><td v-if="!isNotice"><span v-if="entry.attachments?.length" :title="entry.attachments.map(file=>file.name).join(', ')">{{entry.attachments.length}}개 (예시)</span><span v-else>—</span></td></tr></tbody></table></div></div><nav class="board-pagination" aria-label="게시판 페이지 이동"><button type="button" :disabled="page===1" @click="page--">이전</button><button v-for="number in pageButtons" :key="number" type="button" :class="{active:page===number}" :aria-current="page===number?'page':undefined" @click="page=number">{{number}}</button><button type="button" :disabled="page===totalPages" @click="page++">다음</button></nav>
   </template>
  </section>
 </template>
@@ -123,4 +163,10 @@ function startWriting(){draft.value={title:'',category:categories.value[0],conte
 .board-list .file{width:100px}
 .board-list td:last-child{white-space:nowrap}
 @media(max-width:600px){.list-heading{padding-inline:16px}}
+</style><style scoped>
+.information-board .board-title-button{border:0;background:transparent;padding:0;color:#006BA6;font-size:14px;font-weight:600;white-space:normal;text-align:center}
+.board-title-button:hover{text-decoration:underline}.board-detail{display:flex;flex-direction:column;flex:1;min-height:0}.detail-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:24px;border-bottom:1px solid #D5E4EF}.detail-heading span{font-size:13px;color:#6B8394}.detail-heading h2{font-size:23px;margin:12px 0 0;overflow-wrap:anywhere}.detail-body{padding:24px;overflow:auto;min-height:0;line-height:1.8;overflow-wrap:anywhere}.detail-body>p{white-space:pre-wrap;margin:0}.detail-files{border-top:1px solid #D5E4EF;margin-top:28px;padding-top:18px}.detail-files h3{font-size:16px;margin:0 0 12px}.detail-files p{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.detail-files span{color:#6B8394}@media(max-width:600px){.detail-heading{flex-wrap:wrap;padding:18px}.detail-body{padding:18px}}
 </style>
+<style scoped>.detail-actions{display:flex;gap:8px;flex-wrap:wrap}.information-board .delete-preview-button{color:#BA3550;border-color:#E4BCC6}</style>
+
+<style scoped>.board-detail .detail-body{flex:1}.board-detail .detail-actions{justify-content:flex-end;flex-shrink:0;padding:16px 24px;border-top:1px solid #D5E4EF}@media(max-width:600px){.board-detail .detail-actions{padding:14px 18px}}</style>

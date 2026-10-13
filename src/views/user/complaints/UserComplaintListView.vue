@@ -2,7 +2,7 @@
 import ComplaintList from "../../../components/complaints/ComplaintList.vue"
 import banner from "../../../assets/min.png"
 </script>
-<template><section class="citizen-list-page"><header class="citizen-list-heading" :style="{ '--list-banner': `url(${banner})` }"><div><p>광주교통공사 안내</p><h1>민원목록</h1><span>시민의 소중한 의견에 귀 기울여<br />더 나은 교통 서비스를 만들어갑니다.</span></div></header><ComplaintList class="citizen-complaint-list" :page-size="5" /></section></template>
+<template><section class="citizen-list-page"><header class="citizen-list-heading" :style="{ '--list-banner': `url(${banner})` }"><div><p>광주교통공사 안내</p><h1>민원목록</h1><span>시민의 소중한 의견에 귀 기울여<br />더 나은 교통 서비스를 만들어갑니다.</span></div></header><ComplaintList class="citizen-complaint-list" auto-page-size /></section></template>
 
 <style scoped>.citizen-complaint-list{flex:1;min-height:0;width:100%}.citizen-complaint-list :deep(.list-table-wrap){flex:1;min-height:0;overflow:auto}.citizen-complaint-list :deep(table){height:auto}.citizen-complaint-list :deep(.list-pagination){flex-shrink:0;margin-top:auto;padding-top:12px}</style>
 

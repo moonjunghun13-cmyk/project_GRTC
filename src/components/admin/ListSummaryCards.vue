@@ -1,0 +1,11 @@
+<script setup>
+import { FileText, MessageSquare, FolderOpen } from 'lucide-vue-next'
+defineProps({items:{type:Array,required:true},kind:{type:String,default:'file'},activeKey:{type:String,default:''}})
+const emit=defineEmits(['select'])
+</script>
+<template><div class="admin-list-summary" aria-label="목록 요약"><button type="button" v-for="(item,i) in items" :key="item.label" class="admin-summary-card" :class="{active:activeKey===item.value}" :aria-pressed="activeKey===item.value" @click="emit('select',item)"><span class="admin-summary-icon" :data-tone="i%4"><component :is="kind==='complaint'?MessageSquare:kind==='resource'?FolderOpen:FileText" :size="22" :stroke-width="1.8" /></span><div><p>{{item.label}}</p><strong>{{item.count==null?'—':item.count}}<small>건</small></strong></div></button></div></template>
+<style scoped>
+.admin-list-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;min-width:0;flex-shrink:0}.admin-summary-card{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px;border:1px solid #DAE3E9;border-radius:10px;background:white;box-sizing:border-box;min-width:0}.admin-summary-icon{width:36px;height:36px;border-radius:8px;background:#EEF5F8;color:#006BA6;display:grid;place-items:center;flex-shrink:0}.admin-summary-icon[data-tone="1"]{background:#F0F5E8;color:#557A29}.admin-summary-icon[data-tone="2"]{background:#FBF5EB;color:#95621C}.admin-summary-icon[data-tone="3"]{background:#FAF0F2;color:#A33D4D}.admin-summary-card p{font-size:14px;color:#637588;margin:0 0 5px;overflow-wrap:anywhere}.admin-summary-card strong{font-size:28px;color:#16374B;line-height:1.2}.admin-summary-card small{font-size:13px;font-weight:500;margin-left:5px}@media(max-width:1100px){.admin-list-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}@media(max-width:500px){.admin-list-summary{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<style scoped>.admin-summary-card{font:inherit;text-align:left;cursor:pointer}.admin-summary-card.active{background:#EEF5F8;border-color:#006BA6}.admin-summary-card:hover{border-color:#62B5D4;background:#F8FBFD}.admin-summary-card:focus-visible{outline:3px solid #62B5D4;outline-offset:2px}</style>

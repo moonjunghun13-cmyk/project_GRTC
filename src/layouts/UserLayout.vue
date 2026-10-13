@@ -49,4 +49,13 @@ const sidebarOpen=ref(true)
 .citizen-list-layout .complaint-page-body :deep(.citizen-list-page),.citizen-list-layout .complaint-page-body :deep(.information-board){width:100%;max-width:var(--citizen-list-width);margin-inline:auto;box-sizing:border-box}
 .citizen-list-layout .complaint-page-body :deep(.list-search),.citizen-list-layout .complaint-page-body :deep(.board-search),.citizen-list-layout .complaint-page-body :deep(.list-table-wrap),.citizen-list-layout .complaint-page-body :deep(.board-list){width:100%;box-sizing:border-box}
 @media(max-width:600px){.citizen-list-layout{--citizen-list-padding:16px}.citizen-list-layout .complaint-page-body{padding-top:16px;padding-bottom:16px}}
+</style><style scoped>
+/* Keep viewport capacity for pagination, while the visible frame ends at the last row. */
+.citizen-list-layout .complaint-page-body :deep(.list-table-wrap){border:0;border-radius:0;background:transparent;box-shadow:none}
+.citizen-list-layout .complaint-page-body :deep(.list-table-wrap table){background:white;border:1px solid #D5E4EF;border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.citizen-list-layout .complaint-page-body :deep(.board-list){border:0;border-radius:0;background:transparent;box-shadow:none}
+.citizen-list-layout .complaint-page-body :deep(.board-table-scroll){border-radius:0;background:transparent}
+.citizen-list-layout .complaint-page-body :deep(.board-table-scroll table){background:white;border:1px solid #D5E4EF;border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.citizen-list-layout .complaint-page-body :deep(.board-list .list-heading){background:white;border:1px solid #D5E4EF;border-bottom:0;border-radius:14px 14px 0 0}
+.citizen-list-layout .complaint-page-body :deep(.board-list .board-table-scroll table){border-radius:0 0 14px 14px}
 </style>

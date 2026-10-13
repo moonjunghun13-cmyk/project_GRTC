@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import './styles/global.css'
 import './styles/button-depth.css'
 import './styles/character-cursor.css'
+import './styles/responsive.css'
 import App from './App.vue'
 import router from './router'
 

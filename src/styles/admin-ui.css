@@ -221,3 +221,69 @@ html.character-cursor .admin-ui :is(:disabled,[aria-disabled=true]):not(dialog *
 .admin-ui.management-shell .app-content.dashboard-content-shell{background:#E7EEF6 !important}
 
 .admin-ui .sidebar-session .sidebar-members-link{font-family:inherit;font-size:13px;font-weight:600;line-height:normal}
+/* Administrator list pages share heading/summary/search/table positions. */
+.admin-ui .admin-board .board-heading{background-image:none;min-height:64px;height:64px;padding:0;border-radius:0;align-items:flex-start}
+.admin-ui .admin-board .board-heading>div:last-child{max-width:100%}
+.admin-ui .admin-board .board-heading p{display:none}
+.admin-ui .admin-board .board-heading h1{font-size:32px;color:#16374B;margin:0 0 8px;line-height:1.25}
+.admin-ui .admin-board .board-heading span{font-size:15px;color:#637588}
+.admin-ui .admin-board .board-search{padding:0;margin:0;border:0;box-shadow:none;background:none}
+.admin-ui .admin-board .board-search :is(input,select,button),.admin-ui .admin-board .search-input{height:42px}
+.admin-ui .admin-board .board-list{min-height:260px}
+.admin-ui .app-content :is(.fleet-list,.member-list-page,.admin-board){width:100%;max-width:1600px;margin-inline:auto;box-sizing:border-box}
+@media(min-width:1101px){
+.admin-ui .admin-board.board-browsing{display:grid;height:100%;min-height:640px;grid-template-rows:64px 104px 42px minmax(260px,1fr) 34px;gap:16px}
+.admin-ui .admin-board.board-browsing .board-heading{grid-row:1;margin:0}
+.admin-ui .admin-board.board-browsing .admin-list-summary{grid-row:2}
+.admin-ui .admin-board.board-browsing .board-search{grid-row:3}
+.admin-ui .admin-board.board-browsing .board-list{grid-row:4}
+.admin-ui .admin-board.board-browsing .board-pagination{grid-row:5;margin:0}
+.admin-ui .list-page-body .complaint-list>.admin-list-summary{grid-row:1}
+}
+@media(max-width:1100px){.admin-ui .admin-board .admin-list-summary{margin-bottom:16px}.admin-ui .admin-board .board-search{margin-bottom:16px}.admin-ui .admin-board .board-heading{margin-bottom:16px;height:auto}}
+
+/* Match administrator board composition to the fleet/complaint lists. */
+.admin-ui .admin-board.board-browsing .list-heading{height:0;min-height:0;padding:0;border:0;position:relative;flex-shrink:0}
+.admin-ui .admin-board.board-browsing .list-heading>h2,.admin-ui .admin-board.board-browsing .list-heading-actions>span{display:none}
+.admin-ui .admin-board.board-browsing .list-heading-actions{position:absolute;right:0;top:-58px;z-index:2}
+.admin-ui .admin-board.board-browsing:has(.resource-map-link) .board-search{padding-right:100px}
+.admin-ui .admin-board.board-browsing .board-list{border-radius:12px;overflow:visible;background:white}
+.admin-ui .admin-board.board-browsing .board-table-scroll{border-radius:12px;flex:1;min-height:0;overflow:auto}
+.admin-ui .admin-board.board-browsing .board-list th{height:44px;padding:8px 12px;box-sizing:border-box}
+.admin-ui .admin-board.board-browsing .board-list td{height:48px;padding:6px 12px;box-sizing:border-box}
+.admin-ui .admin-board.board-browsing .board-pagination{height:34px;align-items:center}
+@media(max-width:1100px){.admin-ui .admin-board.board-browsing .list-heading-actions{top:-54px}.admin-ui .admin-board.board-browsing .board-list{min-height:360px}}
+@media(max-width:700px){.admin-ui .admin-board.board-browsing:has(.resource-map-link) .board-search{padding-right:0}.admin-ui .admin-board.board-browsing .list-heading-actions{position:static;justify-content:flex-end}.admin-ui .admin-board.board-browsing:has(.resource-map-link) .list-heading{height:46px;min-height:46px;padding:6px 12px}}
+/* Administrator tables end at their last row rather than stretching blank space. */
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap){min-height:0;align-self:start;height:auto;max-height:100%;overflow:auto}
+.admin-ui .admin-board.board-browsing .board-list{min-height:0;height:auto;align-self:start;max-height:100%}
+.admin-ui .admin-board.board-browsing .board-table-scroll{flex:0 1 auto;height:auto;max-height:100%}
+.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap,.board-list) table{height:auto !important}
+@media(max-width:1100px){.admin-ui .app-content :is(.fleet-table,.member-list-card,.list-table-wrap){height:auto;max-height:560px}.admin-ui .admin-board.board-browsing .board-list{min-height:0}}
+/* Match notice/resource corner details to the other administrator lists. */
+.admin-ui .admin-board.board-browsing .board-list,.admin-ui .admin-board.board-browsing .board-table-scroll{border-radius:10px}
+.admin-ui .admin-board .board-search :is(input,select,button),.admin-ui .admin-board .search-input,.admin-ui .admin-board .board-pagination button,.admin-ui .admin-board .resource-map-link{border-radius:6px}
+.admin-ui .admin-board .board-search{border-radius:0}
+.admin-ui .admin-board .board-detail,.admin-ui .admin-board .board-editor{border-radius:12px}
+/* Shared typography for administrator summary cards. */
+.admin-ui .admin-list-summary,.admin-ui .admin-list-summary .admin-summary-card,.admin-ui .fleet-summary .summary-filter{font-family:var(--font-family,'SUIT',sans-serif)}
+.admin-ui .admin-list-summary .admin-summary-card p,.admin-ui .fleet-summary .summary-filter p{font-size:14px;font-weight:700;line-height:1.5;color:#637588;margin:0 0 5px}
+.admin-ui .admin-list-summary .admin-summary-card strong,.admin-ui .fleet-summary .summary-filter strong{font-size:28px;font-weight:800;line-height:1.2;color:#16374B}
+.admin-ui .admin-list-summary .admin-summary-card small,.admin-ui .fleet-summary .summary-filter small{font-size:13px;font-weight:500;line-height:1.2;margin-left:5px}
+/* One corner radius for all five administrator list tables. */
+.admin-ui .app-content .fleet-table,.admin-ui .app-content .list-table-wrap,.admin-ui .app-content .admin-board.board-browsing .board-list,.admin-ui .app-content .admin-board.board-browsing .board-table-scroll{border-radius:10px !important}
+.admin-ui .app-content :is(.fleet-table,.list-table-wrap) table thead th:first-child,.admin-ui .app-content .admin-board .board-list table thead th:first-child{border-top-left-radius:9px}
+.admin-ui .app-content :is(.fleet-table,.list-table-wrap) table thead th:last-child,.admin-ui .app-content .admin-board .board-list table thead th:last-child{border-top-right-radius:9px}
+.admin-ui .app-content :is(.fleet-table,.list-table-wrap) table tbody tr:last-child td:first-child,.admin-ui .app-content .admin-board .board-list table tbody tr:last-child td:first-child{border-bottom-left-radius:9px}
+.admin-ui .app-content :is(.fleet-table,.list-table-wrap) table tbody tr:last-child td:last-child,.admin-ui .app-content .admin-board .board-list table tbody tr:last-child td:last-child{border-bottom-right-radius:9px}
+/* Administrator boards use the same single table frame and search controls. */
+.admin-ui .app-content .admin-board.board-browsing .board-list{border:1px solid #DAE3E9;border-radius:10px !important;background:#FFFFFF;box-shadow:none;overflow:hidden}
+.admin-ui .app-content .admin-board.board-browsing .board-table-scroll{border:0;border-radius:0 !important;background:transparent}
+.admin-ui .admin-board.board-browsing .list-heading{display:none}
+.admin-ui .admin-board.board-browsing .board-search{padding:0 !important;gap:10px;border:0;background:transparent;box-shadow:none}
+.admin-ui .admin-board .board-search .search-input{order:0;border:0;border-radius:0;padding:0;min-width:0;flex:1}
+.admin-ui .admin-board .board-search .search-input>svg{display:none}
+.admin-ui .admin-board .board-search .search-input input,.admin-ui .admin-board .board-search>select{height:42px;border:1px solid #CAD6DE;border-radius:6px;padding:0 14px;font:inherit;font-size:15px;color:#334B5C;background:white;box-sizing:border-box}
+.admin-ui .admin-board .board-search>select{order:1;width:140px}
+.admin-ui .admin-board .board-search>button,.admin-ui .admin-board .board-search>.resource-map-link{order:2;height:42px;min-height:42px;padding:0 14px;border-radius:6px;font-size:15px;box-sizing:border-box}
+@media(max-width:1100px){.admin-ui .admin-board .board-search .search-input{flex:1 1 100%}}
