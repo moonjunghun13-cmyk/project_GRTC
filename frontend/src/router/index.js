@@ -10,7 +10,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [{ path: '/', name: 'intro', component: () => import('../views/public/IntroView.vue') },
+  routes: [{ path:'/home',name:'user-home',meta:{requiresAuth:true,role:'USER'},component:()=>import('../views/user/HomeView.vue') }, { path: '/', name: 'intro', component: () => import('../views/public/IntroView.vue') },
 { path: '/', component: () => import('../layouts/AuthLayout.vue'), children: [
 { path: 'login', name: 'login', component: () => import('../views/auth/LoginView.vue') },
 { path: 'signup', name: 'signup', component: () => import('../views/auth/SignupView.vue') },
@@ -29,10 +29,16 @@ const router = createRouter({
 { path: 'complaints', name: 'admin-complaints', component: () => import('../views/admin/complaints/AdminComplaintListView.vue') },
 { path: 'complaints/new', name: 'admin-complaint-create', component: () => import('../views/user/complaints/ComplaintCreateView.vue') },
 { path: 'complaints/:id', name: 'admin-complaint-detail', component: () => import('../views/admin/complaints/AdminComplaintDetailView.vue') },
+{ path: 'notices', name: 'admin-notices', meta:{frontendBoard:true}, component:()=>import('../views/shared/InformationBoardView.vue'), props:{kind:'notices',admin:true} },
+{ path: 'resources', name: 'admin-resources', meta:{frontendBoard:true}, component:()=>import('../views/shared/InformationBoardView.vue'), props:{kind:'resources',admin:true} },
 { path: 'members', name: 'admin-members', component: () => import('../views/admin/members/MemberListView.vue') },
 { path: 'members/:id', name: 'admin-member-detail', component: () => import('../views/admin/members/MemberDetailView.vue') }] },
 { path: '/complaints', alias: '/user/complaints', meta: { requiresAuth: true }, component: () => import('../layouts/UserLayout.vue'), children: [{ path: '', name: 'user-complaints', component: () => import('../views/user/complaints/UserComplaintListView.vue') },
 { path: '/members/me', name: 'user-member-info', meta: {citizenInfo:true}, component: () => import('../views/user/members/MyMemberView.vue') },
+{ path: '/notices', name: 'user-notices', meta:{role:'USER'}, component:()=>import('../views/shared/InformationBoardView.vue'), props:{kind:'notices'} },
+{ path: '/resources', name: 'user-resources', meta:{role:'USER'}, component:()=>import('../views/shared/InformationBoardView.vue'), props:{kind:'resources'} },
+{ path: 'faq', name: 'user-faq', meta:{role:'USER'}, component:()=>import('../views/user/help/FaqView.vue') },
+{ path: 'guide', name: 'user-complaint-guide', meta:{role:'USER'}, component:()=>import('../views/user/help/ComplaintGuideView.vue') },
 { path: 'new', name: 'user-complaint-create', component: () => import('../views/user/complaints/ComplaintCreateView.vue') },
 { path: ':id', name: 'user-complaint-detail', component: () => import('../views/user/complaints/UserComplaintDetailView.vue') },
 { path: '/access-denied', name: 'menu-access-denied', component: () => import('../views/errors/MenuAccessDenied.vue') },
@@ -43,7 +49,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
   const guestPage = ['intro','login','signup'].includes(to.name)
-  const home = user => ({name:isAdminAccount(user)?'admin-dashboard':'user-complaints',replace:true})
+  const home = user => ({name:isAdminAccount(user)?'admin-dashboard':'user-home',replace:true})
   if (!API_INTEGRATION_ENABLED) {
     setPreviewRole(to.query.previewRole)
     const user = currentUser.value
@@ -70,7 +76,7 @@ router.beforeEach(async (to, from) => {
   if (to.meta.requiresAuth && !user) return '/login'
   if (to.meta.citizenInfo && isAdminAccount(user)) return '/dashboard'
   if (to.meta.role && user?.role !== to.meta.role) return {name:'menu-access-denied',query:{menu:to.path.replace(/^\/admin/, '/dashboard').split('/')[2]||'complaints'},replace:true}
-  if(to.meta.role==='ADMIN' && to.name!=='admin-menu-access-denied' && !canAccessAdminPath(user,to.path))return {name:'admin-menu-access-denied',query:{menu:adminMenuForPath(to.path)||'dashboard'},replace:true}
+  if(to.meta.role==='ADMIN' && to.name!=='admin-menu-access-denied' && !to.meta.frontendBoard && !canAccessAdminPath(user,to.path))return {name:'admin-menu-access-denied',query:{menu:adminMenuForPath(to.path)||'dashboard'},replace:true}
   return true
 })
 installApiErrorHandlers((kind, error) => {

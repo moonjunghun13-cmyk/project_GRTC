@@ -3,6 +3,12 @@ import '../../styles/auth-entry.css'
 import { reactive, ref } from 'vue'
 import { errorMessage } from '../../api/clients'
 import { signup } from '../../api/auth'
+import { useRouter } from 'vue-router'
+import happy from '../../assets/happy.png'
+import logo from '../../assets/logo.png'
+const router = useRouter()
+const welcomeDialog = ref(null)
+function goToLogin() { welcomeDialog.value?.close(); router.push({ name: 'login' }) }
 const form = reactive({ name: '', username: '', email: '', password: '', passwordConfirmation: '', ageConfirmed: false })
 const emailInput = ref(null)
 const emailError = ref('')
@@ -27,7 +33,7 @@ async function submit() {
   try {
     // 백엔드 SignUpRequestDto: name, loginId, email, password, passwordConfirm, over14
     await signup(form)
-    message.value = '회원가입이 완료되었습니다. 로그인해 주세요.'
+    welcomeDialog.value.showModal()
   } catch (error) { message.value = errorMessage(error) }
   finally { busy.value = false }
 }
@@ -54,10 +60,50 @@ async function submit() {
     </form>
     <p v-if="message" class="authentication-message" role="status">{{ message }}</p>
     <p class="authentication-footer auth-enter" style="--auth-enter-delay: 640ms">이미 계정이 있으신가요?<RouterLink to="/login">로그인</RouterLink></p>
+    <Teleport to="body">
+      <dialog ref="welcomeDialog" class="signup-welcome" aria-labelledby="welcome-title" aria-describedby="welcome-description">
+        <img class="welcome-logo" :src="logo" alt="광주교통공사" />
+        <button class="welcome-close" type="button" aria-label="환영 팝업 닫기" @click="welcomeDialog.close()">×</button>
+        <img class="welcome-character" :src="happy" alt="환영하는 광주교통공사 캐릭터" />
+        <h2 id="welcome-title">환영합니다! 🎉</h2>
+        <p id="welcome-description">회원가입이 완료되었습니다.</p>
+        <button type="button" autofocus @click="goToLogin">로그인하러 가기</button>
+      </dialog>
+    </Teleport>
   </section>
 </template>
 
 <style scoped>
 .email-error { margin: 0; color: #c52f35; font-size: 14px; line-height: 1.5; }
 .authentication-field input[aria-invalid="true"] { border-color: #c52f35; }
+.signup-welcome { box-sizing:border-box; width:min(520px,calc(100vw - 40px)); aspect-ratio:1; max-height:calc(100dvh - 40px); overflow-y:auto; padding:30px 32px 32px; border:0; border-radius:24px; background:#fff; color:#124675; text-align:center; box-shadow:0 16px 60px rgba(15,47,78,.2); }
+.signup-welcome::backdrop { background:rgba(12,32,52,.46); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+.signup-welcome .welcome-character { display:block; width:376px; max-width:100%; height:260px; object-fit:contain; object-position:center; margin:0 auto 18px; }
+.signup-welcome h2 { margin:0 0 12px; font-size:34px; font-weight:800; text-align:center; }
+.signup-welcome p { margin:0 0 18px; color:#526A7D; font-size:17px; line-height:1.6; }
+.signup-welcome button { width:100%; min-height:48px; padding:12px 20px; border:0; border-radius:12px; background:#075786; color:white; font:inherit; font-weight:700; cursor:pointer; }
+.signup-welcome button:hover { background:#006EAF; }
+.signup-welcome button:focus-visible { outline:3px solid #008EE0; outline-offset:4px; }
+@media(max-width:560px),(max-height:600px){.signup-welcome{aspect-ratio:auto;padding:20px}.signup-welcome .welcome-character{height:min(240px,30dvh);margin-bottom:10px}.signup-welcome h2{font-size:28px}.signup-welcome p{margin-bottom:14px}}
+
+.signup-welcome {
+  position: fixed;
+  isolation: isolate;
+  background: #fff url('../../assets/glass.png') center / cover no-repeat;
+}
+.signup-welcome::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 48%, rgba(255,255,255,.98) 18%, rgba(255,255,255,.94) 42%, rgba(255,255,255,.65) 65%, rgba(255,255,255,.12) 100%);
+}
+
+.signup-welcome .welcome-character { transform: translateY(22px); }
+
+.signup-welcome .welcome-logo { position:absolute; left:24px; top:20px; display:block; width:140px; max-width:40%; height:auto; object-fit:contain; margin:0; }
+.signup-welcome .welcome-close { position:absolute; right:16px; top:12px; width:36px; min-height:36px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.8); color:#124675; font-size:28px; line-height:1; box-shadow:none !important; }
+.signup-welcome .welcome-close:hover { background:#E5F3FC; }
 </style>

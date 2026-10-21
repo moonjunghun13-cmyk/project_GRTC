@@ -58,4 +58,10 @@ public interface DispatchRepository extends JpaRepository<DispatchEntity, Long>,
 
     // 예전 예시 배차(시간표 이전 초기 데이터) 정리용
     List<DispatchEntity> findAllByMoveTypeIsNullAndDriverNameIn(List<String> driverNames);
+
+    // 차량 편성 정리용: 그 차량들을 쓰는 배차
+    List<DispatchEntity> findAllByVehicleIdIn(List<Long> vehicleIds);
+
+    // 차량 편성 정리용: 초기 데이터로 만든 시간표 배차 (비고에 '예시 배정'이 들어간 것)
+    List<DispatchEntity> findAllByMoveTypeIsNotNullAndRemarkContaining(String keyword);
 }

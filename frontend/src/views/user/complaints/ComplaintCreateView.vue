@@ -57,13 +57,13 @@ complaintOptions(route.name==='admin-complaint-create').then(o=>{complaintTypes.
  </section>
 </template>
 <style scoped>
-.complaint-write-page { min-height: 100%; display: flex; flex-direction: column; color: #064b76; }
+.complaint-write-page { min-height: 100%; display: flex; flex-direction: column; color: var(--grtc-heading); }
 .write-heading { position: relative; display: flex; align-items: flex-end; justify-content: space-between; flex-shrink: 0; min-height: 165px; padding-bottom: 18px; margin-bottom: 20px; gap: 20px; }
 .write-heading h1 { font-size: 34px; font-weight: 800; margin: 0 0 8px; }
 .write-decoration { width: 400px; max-width: 55%; display: flex; flex-direction: column; align-items: center; }
 .write-decoration img { display: block; width: 100%; height: auto; }
-.write-bubble { position: relative; padding: 8px 18px; margin-bottom: 10px; border: 1px solid #acd8ed; border-radius: 16px; background: white; font-size: 16px; font-weight: 700; white-space: nowrap; }
-.write-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; width: 10px; height: 10px; background: white; border-right: 1px solid #acd8ed; border-bottom: 1px solid #acd8ed; transform: rotate(45deg); }
+.write-bubble { position: relative; padding: 8px 18px; margin-bottom: 10px; border: 1px solid var(--grtc-focus); border-radius: 16px; background: white; font-size: 16px; font-weight: 700; white-space: nowrap; }
+.write-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; width: 10px; height: 10px; background: white; border-right: 1px solid var(--grtc-focus); border-bottom: 1px solid var(--grtc-focus); transform: rotate(45deg); }
 .write-wave { position: absolute; bottom: 0; left: 0; width: 100%; height: 10px; fill: none; stroke: #85bedb; stroke-width: 1.5; }
 .write-form { display: flex; flex-direction: column; flex: 1; gap: 16px; min-height: 0; }
 .write-first-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 32px; }
@@ -71,26 +71,26 @@ complaintOptions(route.name==='admin-complaint-create').then(o=>{complaintTypes.
 .write-row > label { font-size: 17px; font-weight: 700; padding-top: 12px; }
 .write-row > label span { color: #c53740; }
 .write-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.write-row input:not([type=file]), .write-row select { width: 100%; min-width: 0; height: 46px; padding: 0 16px; border: 1px solid #c8dce9; border-radius: 9px; background: #fff; color: #28465c; font: inherit; font-size: 17px; }
+.write-row input:not([type=file]), .write-row select { width: 100%; min-width: 0; height: 46px; padding: 0 16px; border: 1px solid var(--grtc-border); border-radius: 9px; background: #fff; color: var(--grtc-text); font: inherit; font-size: 17px; }
 .write-row input[readonly] { background: #f2f7fa; color: #6c8294; }
 .write-row [aria-invalid=true] { border-color: #c53740; }
 .write-content-row { flex: 1 1 0; min-height: 190px; grid-template-rows: minmax(0, 1fr); }
 .write-content-field { height: 100%; min-height: 0; }
 .write-content-field :deep(.complaint-editor) { min-height: 160px; }
 .write-error { margin: 0; font-size: 14px; color: #c53740; line-height: 1.4; }
-.write-file-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: #7c8d9a; font-size: 15px; }
-.write-file-button { min-height: 38px; padding: 0 18px; border: 1px solid #b7d1e1; border-radius: 7px; color: #064b76; background: #f8fbfd; font: inherit; cursor: pointer; }
+.write-file-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--grtc-muted); font-size: 15px; }
+.write-file-button { min-height: 38px; padding: 0 18px; border: 1px solid var(--grtc-border); border-radius: 7px; color: var(--grtc-heading); background: var(--grtc-surface); font: inherit; cursor: pointer; }
 .write-file-input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
 .write-files { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
-.write-files li { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 10px; background: #edf6fb; border-radius: 6px; font-size: 14px; }
+.write-files li { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 10px; background: var(--grtc-tint); border-radius: 6px; font-size: 14px; }
 .write-files li span { overflow-wrap: anywhere; }
 .write-files button { border: 0; background: transparent; color: #446a83; font-size: 20px; cursor: pointer; }
 .write-actions { display: flex; justify-content: flex-end; gap: 12px; flex-shrink: 0; }
 .write-actions button { min-height: 46px; padding: 0 28px; border-radius: 9px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; transition: background-color 200ms ease-out; }
-.write-cancel { border: 1px solid #086b9f; color: #086b9f; background: white; }
-.write-submit { border: 1px solid #064b76; color: white; background: #064b76; }
-.write-cancel:hover { background: #edf6fb; } .write-submit:hover { background: #033955; }
-.write-form :is(input,select,button):focus-visible { outline: 3px solid #3298db; outline-offset: 2px; }
+.write-cancel { border: 1px solid var(--grtc-primary); color: var(--grtc-primary); background: white; }
+.write-submit { border: 1px solid var(--grtc-heading); color: white; background: var(--grtc-heading); }
+.write-cancel:hover { background: var(--grtc-tint); } .write-submit:hover { background: #033955; }
+.write-form :is(input,select,button):focus-visible { outline: 3px solid var(--grtc-focus); outline-offset: 2px; }
 @media (min-width:1001px) and (max-height:850px) { .write-heading { min-height: 130px; margin-bottom: 14px; padding-bottom: 12px; } .write-decoration { width: 285px; } .write-heading h1 { font-size: 32px; } .write-form { gap: 12px; } .write-bubble { padding: 6px 14px; font-size: 15px; margin-bottom: 6px; } }
 @media (max-width:1000px) { .complaint-write-page { min-height: auto; } .write-first-row { grid-template-columns: 1fr; gap: 16px; } .write-content-row { min-height: 280px; } .write-heading { min-height: 150px; } .write-decoration { width: 300px; } .write-row { grid-template-columns: 90px minmax(0,1fr); gap: 12px; } }
 @media (max-width:650px) { .write-row { grid-template-columns: 1fr; gap: 6px; } .write-row > label { padding-top: 0; } .write-heading h1 { font-size: 30px; } .write-decoration { max-width: 60%; } .write-bubble { font-size: 12px; padding: 6px 8px; } }

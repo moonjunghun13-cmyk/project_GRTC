@@ -3,9 +3,9 @@ import {useRoute} from 'vue-router'
 import {mainApi,errorMessage} from '../api/clients'
 import {complaintBase,mapComplaint} from '../services/complaintApi'
 
-export function useComplaintList() {
+export function useComplaintList({pageSize=10}={}) {
  const draft=reactive({keyword:'',status:''}), applied=reactive({...draft})
- const page=ref(1), size=10, selected=ref([])
+ const page=ref(1), size=pageSize, selected=ref([])
  const route=useRoute(),rows=ref([]),totalPages=ref(1),error=ref('');let sequence=0
  async function load(){const request=++sequence;try{const r=(await mainApi.get(complaintBase(String(route.name).startsWith('admin-')),{params:{...applied,page:page.value,size}})).data;if(request!==sequence)return;rows.value=r.content.map(mapComplaint);totalPages.value=Math.max(1,r.totalPages);error.value=''}catch(e){if(request===sequence)error.value=errorMessage(e)}}
  watch(()=>[page.value,JSON.stringify(applied)],load,{immediate:true})
